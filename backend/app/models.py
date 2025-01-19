@@ -134,6 +134,9 @@ class Company(CompanyBase, table=True):
     employees: list["User"] = Relationship(back_populates="company", cascade_delete=True)
     departments: list["Department"] = Relationship(back_populates="company", cascade_delete=True)
 
+class CompanyRead(Company):
+    pass
+
 class CompanyCreate(CompanyBase):
     pass
 
