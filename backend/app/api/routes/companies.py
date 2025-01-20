@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models import CompanyRead, CompanyCreate
+from app.models import Company, CompanyRead, CompanyCreate
 
 router = APIRouter(prefix="/company", tags=["companies"])
 
@@ -17,7 +17,7 @@ def read_company(
     """
     Retrieve company.
     """
-    company = session.get(CompanyRead, current_user.company_id)
+    company = session.get(Company, current_user.company_id)
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
     if not current_user.is_superuser and (company.id != current_user.company_id):

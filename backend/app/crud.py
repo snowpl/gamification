@@ -4,7 +4,7 @@ from typing import Any
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Company, CompanyCreate, Department, DepartmentCreate, Item, ItemCreate, User, UserCreate, UserUpdate
+from app.models import Company, CompanyCreate, Department, DepartmentCreate, Item, ItemCreate, Skill, SkillCreate, User, UserCreate, UserUpdate
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -66,3 +66,10 @@ def create_department(*, session: Session, department_in: DepartmentCreate) -> D
     session.commit()
     session.refresh(db_department)
     return db_department
+
+def create_skill(*, session: Session, skill_in: SkillCreate) -> Skill:
+    db_skill = Skill.model_validate(skill_in)
+    session.add(db_skill)
+    session.commit()
+    session.refresh(db_skill)
+    return db_skill

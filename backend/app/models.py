@@ -2,7 +2,7 @@ from typing import Optional
 import uuid
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
-
+from sqlalchemy.orm import RelationshipProperty
 
 # Shared properties
 class UserBase(SQLModel):
@@ -38,7 +38,6 @@ class UpdatePassword(SQLModel):
     current_password: str = Field(min_length=8, max_length=40)
     new_password: str = Field(min_length=8, max_length=40)
 
-
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -50,8 +49,18 @@ class User(UserBase, table=True):
         foreign_key="company.id", nullable=False, ondelete="CASCADE"
     )
     department_id: uuid.UUID = Field(foreign_key="department.id")
-    employee_tasks: list["EmployeeTaskBase"] = Relationship(back_populates="assigned_to", cascade_delete=True)
-    approved_tasks: list["EmployeeTaskBase"] = Relationship(back_populates="approved_by_id", cascade_delete=True)
+    employee_tasks: list["EmployeeTask"] = Relationship(
+        sa_relationship=RelationshipProperty(
+            "EmployeeTask",
+            back_populates="assigned_to",
+            foreign_keys='[EmployeeTask.assigned_to_id]')
+    )
+    approved_tasks: list["EmployeeTask"] = Relationship(
+        sa_relationship=RelationshipProperty(
+            "EmployeeTask",
+            back_populates="approved_by",
+            foreign_keys='[EmployeeTask.approved_by_id]')
+    )
     user_skills: list["Skill"] = Relationship(back_populates="user")
 
 # Properties to return via API, id is always required
@@ -134,7 +143,7 @@ class Company(CompanyBase, table=True):
     employees: list["User"] = Relationship(back_populates="company", cascade_delete=True)
     departments: list["Department"] = Relationship(back_populates="company", cascade_delete=True)
 
-class CompanyRead(Company):
+class CompanyRead(CompanyBase):
     pass
 
 class CompanyCreate(CompanyBase):
@@ -162,6 +171,7 @@ class Skill(SkillBase, table=True):
 #Skill properties to recieve on creation
 class SkillCreate(SkillBase):
     department_id: uuid.UUID
+    user_id: Optional[uuid.UUID] = None  # Make user_id optional
 
 # #Shared properties
 # class LevelBase(SQLModel):
@@ -185,14 +195,14 @@ class Department(DepartmentBase, table=True):
     company_id: uuid.UUID = Field(
         foreign_key="company.id", nullable=False, ondelete="CASCADE"
     )
-    company: "Company" = Relationship(back_populates="company", cascade_delete=True)
+    company: "Company" = Relationship(back_populates="departments")
     employees: list["User"] = Relationship(back_populates="department", cascade_delete=True)
     tasks: list["EmployeeTask"] = Relationship(back_populates="department", cascade_delete=True)
     department_skills: list["Skill"] = Relationship(back_populates="department", cascade_delete=True)
 
 #Properties to receive on department creation
 class DepartmentCreate(DepartmentBase):
-    pass
+    company_id: uuid.UUID
 
 # # Shared properties
 class EmployeeTaskBase(SQLModel):
@@ -209,14 +219,24 @@ class EmployeeTaskBase(SQLModel):
 class EmployeeTask(EmployeeTaskBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     title: str = Field(max_length=255)
-    assigned_to_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    assigned_to_id: Optional[uuid.UUID] = Field(
+        foreign_key="user.id", nullable=True, ondelete="CASCADE"
     )
-    assigned_to: User | None = Relationship(back_populates="employee_tasks")
-    approved_by_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    assigned_to: Optional["User"] = Relationship(
+        sa_relationship=RelationshipProperty(
+            "User",
+            back_populates="employee_tasks",
+            foreign_keys='[EmployeeTask.assigned_to_id]')
     )
-    approved_by: User | None = Relationship(back_populates="approved_tasks")
+    approved_by_id: Optional[uuid.UUID] = Field(
+        foreign_key="user.id", nullable=True, ondelete="CASCADE"
+    )
+    approved_by: Optional["User"] = Relationship(
+        sa_relationship=RelationshipProperty(
+            "User",
+            back_populates="approved_tasks",
+            foreign_keys='[EmployeeTask.approved_by_id]')
+    )
     department_id: uuid.UUID = Field(
         foreign_key="department.id", nullable=False, ondelete="CASCADE"
     )

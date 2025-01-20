@@ -38,7 +38,15 @@ def init_db(session: Session) -> None:
             name="Marketing",
             company_id=company.id
         )
-        department = crud.create_department(session=session, department_in=marketing_department)
+        marketing_department = crud.create_department(session=session, department_in=marketing_department)
+        
+        content_skills = SkillCreate(
+            name="Content Creation",
+            department_id=marketing_department.id,
+            current_xp=0,
+            description="Everything related to content creation"
+        )
+        crud.create_skill(session=session, skill_in=content_skills)
 
         delivery_department = DepartmentCreate(
             name="Delivery",
@@ -70,28 +78,13 @@ def init_db(session: Session) -> None:
         )
         department = crud.create_department(session=session, department_in=sales_department)
 
-    department_skills = session.exec(
-        select(Skill).where(Department.company_id == company.id)
-    ).first()
-    if not department_skills:
-        content_skills = SkillCreate(
-            name="Content Creation",
-            department_id=marketing_department.id,
-            current_xp=0,
-            description="Everything related to content creation"
-        )
-        crud.create_skill(session=session, skill_in=content_skills)
-
-    user = session.exec(
-        select(User).where(User.email == settings.FIRST_SUPERUSER)
-    ).first()
-    if not user:
-        user_in = UserCreate(
-            email=settings.FIRST_SUPERUSER,
-            password=settings.FIRST_SUPERUSER_PASSWORD,
-            is_superuser=True,
-            company_id=company.id,
-            department_id=department.id
-        )
-        user = crud.create_user(session=session, user_create=user_in)
-
+    user_in = UserCreate(
+        email=settings.FIRST_SUPERUSER,
+        password=settings.FIRST_SUPERUSER_PASSWORD,
+        is_superuser=True,
+        company_id=company.id,
+        department_id=department.id,
+        current_xp=0,
+        full_name="Admin Test"
+    )
+    user = crud.create_user(session=session, user_create=user_in)
