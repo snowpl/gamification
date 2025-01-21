@@ -3,6 +3,11 @@ from sqlmodel import SQLModel
 from app import crud
 from app.core.config import settings
 from app.models import Company, CompanyCreate, Department, DepartmentCreate, Skill, SkillCreate, User, UserCreate
+from app.core.data_provider import create_marketing_department
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
@@ -30,24 +35,15 @@ def init_db(session: Session) -> None:
         )
         company = crud.create_company(session=session, company_in=company_in)
     
+    logger.info("Looking for department")
     department = session.exec(
         select(Department).where(Department.company_id == company.id)
     ).first()
     if not department:
-        marketing_department = DepartmentCreate(
-            name="Marketing",
-            company_id=company.id
-        )
-        marketing_department = crud.create_department(session=session, department_in=marketing_department)
+        logger.info("No department found")
+        marketing = create_marketing_department(session=session, company_id=company.id)
+        logger.info(marketing)
         
-        content_skills = SkillCreate(
-            name="Content Creation",
-            department_id=marketing_department.id,
-            current_xp=0,
-            description="Everything related to content creation"
-        )
-        crud.create_skill(session=session, skill_in=content_skills)
-
         delivery_department = DepartmentCreate(
             name="Delivery",
             company_id=company.id
@@ -78,13 +74,17 @@ def init_db(session: Session) -> None:
         )
         department = crud.create_department(session=session, department_in=sales_department)
 
-    user_in = UserCreate(
-        email=settings.FIRST_SUPERUSER,
-        password=settings.FIRST_SUPERUSER_PASSWORD,
-        is_superuser=True,
-        company_id=company.id,
-        department_id=department.id,
-        current_xp=0,
-        full_name="Admin Test"
-    )
-    user = crud.create_user(session=session, user_create=user_in)
+    user = session.exec(
+        select(User).where(User.email == settings.FIRST_SUPERUSER)
+    ).first()
+    if not user:
+        user_in = UserCreate(
+            email=settings.FIRST_SUPERUSER,
+            password=settings.FIRST_SUPERUSER_PASSWORD,
+           is_superuser=True,
+            company_id=company.id,
+            department_id=department.id,
+            current_xp=0,
+            full_name="Admin Test"
+        )
+        user = crud.create_user(session=session, user_create=user_in)

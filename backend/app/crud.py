@@ -4,7 +4,7 @@ from typing import Any
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Company, CompanyCreate, Department, DepartmentCreate, Item, ItemCreate, Skill, SkillCreate, User, UserCreate, UserUpdate
+from app.models import AvailableTask, AvailableTaskCreate, Company, CompanyCreate, Department, DepartmentCreate, EmployeeTask, Item, ItemCreate, Skill, SkillCreate, TaskCreate, User, UserCreate, UserUpdate
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -15,7 +15,6 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     session.commit()
     session.refresh(db_obj)
     return db_obj
-
 
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     user_data = user_in.model_dump(exclude_unset=True)
@@ -73,3 +72,10 @@ def create_skill(*, session: Session, skill_in: SkillCreate) -> Skill:
     session.commit()
     session.refresh(db_skill)
     return db_skill
+
+def create_available_task(*, session: Session, task_in: AvailableTaskCreate) -> AvailableTask:
+    db_task = AvailableTask.model_validate(task_in)
+    session.add(db_task)
+    session.commit()
+    session.refresh(db_task)
+    return db_task
