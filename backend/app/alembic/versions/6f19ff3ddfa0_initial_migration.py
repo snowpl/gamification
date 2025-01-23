@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: f58f37e1a677
+Revision ID: 6f19ff3ddfa0
 Revises: 
-Create Date: 2025-01-23 14:03:03.545065
+Create Date: 2025-01-23 16:02:05.128750
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel.sql.sqltypes
 
 
 # revision identifiers, used by Alembic.
-revision = 'f58f37e1a677'
+revision = '6f19ff3ddfa0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -35,7 +35,8 @@ def upgrade():
     sa.Column('event_type', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
     sa.Column('assigned_to_id', sa.Uuid(), nullable=True),
     sa.Column('task_id', sa.Uuid(), nullable=True),
-    sa.Column('reason', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
+    sa.Column('reason', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('approved_by_id', sa.Uuid(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('department',
@@ -70,7 +71,9 @@ def upgrade():
     sa.Column('description', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
     sa.Column('version', sa.Integer(), nullable=False),
     sa.Column('completed_at', sa.DateTime(), nullable=True),
-    sa.Column('reason', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
+    sa.Column('reason', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('requires_approval', sa.Boolean(), nullable=False),
+    sa.Column('submitted_at', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('assigned_to_id', sa.Uuid(), nullable=False),
     sa.Column('approved_by_id', sa.Uuid(), nullable=True),

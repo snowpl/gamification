@@ -256,7 +256,7 @@ class EmployeeTaskBase(SQLModel):
     description: str| None = Field(default=None, max_length=500)
     version: int = 1
     completed_at: datetime | None
-    reason: str| None = Field(default=None, max_length=500),
+    reason: str | None = Field(default=None, max_length=500),
     requires_approval: bool = False
     submitted_at: datetime | None
 
@@ -294,6 +294,7 @@ class TaskEvent(SQLModel, table=True):
     assigned_to_id: UUID| None
     task_id: UUID| None
     reason: str| None = Field(default=None, max_length=500)
+    approved_by_id: UUID | None
 
 # Properties to receive on item creation
 class AvailableTaskCreate(AvailableTaskBase):

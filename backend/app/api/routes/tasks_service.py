@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, insert
 from typing import Optional, List
 from sqlmodel import func, select
-from app.models import AvailableTask, AvailableTasksPublic, EmployeeTask, TaskEvent, TaskStatus
+from app.models import EmployeeTask, TaskEvent, TaskStatus
 
 #region Domain Events
 @dataclass
@@ -27,6 +27,7 @@ class TaskAssignedEvent(TaskEventDomain):
 class TaskCompletedEvent(TaskEventDomain):
     assigned_to_id: UUID
     task_id: UUID
+    approved_by_id: UUID
 
 @dataclass
 class TaskSubmittedEvent(TaskEventDomain):
@@ -35,6 +36,7 @@ class TaskSubmittedEvent(TaskEventDomain):
 @dataclass
 class TaskRejectedEvent(TaskEventDomain):
     reason: str
+    approved_by_id: UUID
 
 @dataclass
 class TaskCancelledEvent(TaskEventDomain):
@@ -65,6 +67,7 @@ class ApproveTaskCommand(Command):
 @dataclass
 class RejectTaskCommand(Command):
     reason: str
+    approved_by_id: UUID
 
 @dataclass
 class CancelTaskCommand(Command):
@@ -82,11 +85,11 @@ class EmployeeTaskDomain:
     completed_at: datetime | None
     created_at: datetime
     reason: str
+    approved_by_id: UUID | None
+    submitted_at: datetime | None
     version: int = 1
     status: TaskStatus = TaskStatus.ASSIGNED
     requires_approval: bool = False
-    approved_by_id: UUID | None
-    submitted_at: datetime | None
 
     @classmethod
     def create(cls, command: AssignTaskCommand) -> tuple['EmployeeTaskDomain', TaskAssignedEvent]:
@@ -109,6 +112,7 @@ class EmployeeTaskDomain:
                    requires_approval=command.requires_approval,
                    approved_by_id=None,
                    submitted_at=None,
+                   status=TaskStatus.ASSIGNED
         )
         return task, event
 
@@ -129,7 +133,8 @@ def _(event: TaskAssignedEvent, task: EmployeeTask | None) -> EmployeeTask:
         assigned_to_id=event.assigned_to_id,
         status=TaskStatus.ASSIGNED,
         created_at=event.timestamp,
-        requires_approval=task.requires_approval
+        requires_approval=task.requires_approval,
+        reason=task.reason
     )
 
 @apply_event.register
@@ -143,7 +148,10 @@ def _(event: TaskCompletedEvent, task: EmployeeTask | None) -> EmployeeTask:
         assigned_to_id=task.assigned_to_id,
         status=TaskStatus.COMPLETED,
         created_at=task.created_at,
-        completed_at=datetime.now()
+        completed_at=datetime.now(),
+        approved_by_id=event.approved_by_id,
+        submitted_at=task.submitted_at,
+        reason=task.reason
     )
 
 @apply_event.register
@@ -173,7 +181,8 @@ def _(event: TaskSubmittedEvent, task: EmployeeTask | None) -> EmployeeTask:
         status=TaskStatus.WAITING_APPROVAL,
         created_at=task.created_at,
         completed_at=task.created_at,
-        submitted_at=datetime.now()
+        submitted_at=datetime.now(),
+        reason=task.reason
     )
 
 @apply_event.register
@@ -211,19 +220,23 @@ def _(command: AssignTaskCommand, task: EmployeeTask | None) -> TaskAssignedEven
 
 @handle_command.register
 def _(command: SubmitTaskCommand, task: EmployeeTask | None) -> TaskCompletedEvent | TaskSubmittedEvent:
-    if task.status == TaskStatus.WAITING_APPROVAL | task.status == TaskStatus.ASSIGNED:
+    if task.status == TaskStatus.WAITING_APPROVAL or task.status == TaskStatus.ASSIGNED:
         if task.requires_approval:
+            print('requires approval')
             return TaskSubmittedEvent(
             aggregate_id=task.id,
             timestamp=datetime.now(),
             version=task.version
             )
+        
+        print('completed')
         return TaskCompletedEvent(
             aggregate_id=task.id,
             timestamp=datetime.now(),
             version=task.version,
             assigned_to_id=task.assigned_to_id,
-            task_id=task.task_id
+            task_id=task.task_id,
+            approved_by_id=task.assigned_to_id
         )
     return None
 
@@ -235,7 +248,8 @@ def _(command: ApproveTaskCommand, task: EmployeeTask | None) -> TaskCompletedEv
             timestamp=datetime.now(),
             version=task.version,
             assigned_to_id=task.assigned_to_id,
-            task_id=task.task_id
+            task_id=task.task_id,
+            approved_by_id=command.approved_by_id
         )
     return None
 
@@ -246,7 +260,8 @@ def _(command: RejectTaskCommand, task: EmployeeTask | None) -> TaskRejectedEven
             aggregate_id=task.id,
             timestamp=datetime.now(),
             version=task.version,
-            reason=command.reason
+            reason=command.reason,
+            approved_by_id=command.approved_by_id
         )
     return None
 
@@ -302,13 +317,18 @@ class PostgresTaskRepository(TaskRepository):
         elif isinstance(event, TaskSubmittedEvent):
             event_data.update({"event_type":"TaskSubmittedEvent"})
         elif isinstance(event, TaskCompletedEvent):
-            event_data.update({"assigned_to_id": event.assigned_to_id, "task_id": event.task_id, "event_type":"TaskCompletedEvent"})
+            print(event.approved_by_id)
+            event_data.update({"assigned_to_id": event.assigned_to_id, "task_id": event.task_id, "event_type":"TaskCompletedEvent", "approved_by_id": event.approved_by_id})
         elif isinstance(event, TaskCancelledEvent):
             event_data.update({"reason": event.reason, "event_type":"TaskCancelledEvent"})
         elif isinstance(event, TaskRejectedEvent):
-            event_data.update({"reason": event.reason, "event_type":"TaskRejectedEvent"})
+            event_data.update({"reason": event.reason, "event_type":"TaskRejectedEvent", "approved_by_id": event.approved_by_id})
+        print(event_data)
+        print('trying to save event')
         self.db_session.execute(insert(TaskEvent).values(event_data))
+        print('saved')
         self.db_session.commit()
+        print('committed')
 
     def get_by_id(self, id: UUID) -> Optional[EmployeeTask]:
         query = select(EmployeeTask).where(EmployeeTask.id==id)
@@ -331,7 +351,7 @@ class TaskService:
     def __init__(self, repository: TaskRepository):
         self.repository = repository
 
-    def get_employee_taks(self, id: UUID) -> List[EmployeeTask]:
+    def get_employee_task(self, id: UUID) -> List[EmployeeTask]:
         return self.repository.get_user_tasks(id)
 
     def get_aggregates(self, id: UUID) -> List[TaskEvent]:
@@ -339,30 +359,42 @@ class TaskService:
 
     def create_task(self, command: AssignTaskCommand) -> UUID:
         task, event = EmployeeTaskDomain.create(command)
+        print('created task')
+        print(task)
         self.repository.save(EmployeeTask(**asdict(task)))
+        print('saved task')
+        print(event)
         self.repository.save_event(event)
+        print('saved event')
         return task.id
 
     def handle_command(self, command: Command) -> TaskEvent:
         # Retrieve the task by ID
+        print('started handling command')
         task = self.repository.get_by_id(command.aggregate_id)
         
+        print(task)
         # If the task doesn't exist, raise an error
         if task is None:
             raise ValueError(f"Task {command.aggregate_id} not found")
 
         # Generate the appropriate event using the command handler
         event = handle_command(command, task)
-
+        print('event handled')
+        print(event)
         # If no event is generated (e.g., task already completed), do nothing
         if event is None:
             return
 
         # Apply the event to update the task's state
+        print('apply event')
         updated_task = apply_event(event, task)
 
+        print('updated task trying to save')
+        print(updated_task)
         # Save the updated task and the event to the repository
         self.repository.save(updated_task)
+        print('updated task trying to save event')
         self.repository.save_event(event)
         return event
 
