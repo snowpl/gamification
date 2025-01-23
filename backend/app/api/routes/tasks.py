@@ -64,9 +64,7 @@ def submit_task(taskSerivce: TaskServiceDep, taskCommand: SubmitTaskCommand) -> 
     """
     Submit task.
     """
-    print('submit-task')
     tasks = taskSerivce.handle_command(taskCommand)
-    print(tasks)
     return tasks
 
 @router.patch("/approve-task", response_model=TaskEventDomain)

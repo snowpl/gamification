@@ -222,14 +222,12 @@ def _(command: AssignTaskCommand, task: EmployeeTask | None) -> TaskAssignedEven
 def _(command: SubmitTaskCommand, task: EmployeeTask | None) -> TaskCompletedEvent | TaskSubmittedEvent:
     if task.status == TaskStatus.WAITING_APPROVAL or task.status == TaskStatus.ASSIGNED:
         if task.requires_approval:
-            print('requires approval')
             return TaskSubmittedEvent(
             aggregate_id=task.id,
             timestamp=datetime.now(),
             version=task.version
             )
         
-        print('completed')
         return TaskCompletedEvent(
             aggregate_id=task.id,
             timestamp=datetime.now(),
@@ -317,19 +315,14 @@ class PostgresTaskRepository(TaskRepository):
         elif isinstance(event, TaskSubmittedEvent):
             event_data.update({"event_type":"TaskSubmittedEvent"})
         elif isinstance(event, TaskCompletedEvent):
-            print(event.approved_by_id)
             event_data.update({"assigned_to_id": event.assigned_to_id, "task_id": event.task_id, "event_type":"TaskCompletedEvent", "approved_by_id": event.approved_by_id})
         elif isinstance(event, TaskCancelledEvent):
             event_data.update({"reason": event.reason, "event_type":"TaskCancelledEvent"})
         elif isinstance(event, TaskRejectedEvent):
             event_data.update({"reason": event.reason, "event_type":"TaskRejectedEvent", "approved_by_id": event.approved_by_id})
-        print(event_data)
-        print('trying to save event')
         self.db_session.execute(insert(TaskEvent).values(event_data))
-        print('saved')
         self.db_session.commit()
-        print('committed')
-
+        
     def get_by_id(self, id: UUID) -> Optional[EmployeeTask]:
         query = select(EmployeeTask).where(EmployeeTask.id==id)
         result = self.db_session.execute(query).scalar_one_or_none()
@@ -359,42 +352,29 @@ class TaskService:
 
     def create_task(self, command: AssignTaskCommand) -> UUID:
         task, event = EmployeeTaskDomain.create(command)
-        print('created task')
-        print(task)
         self.repository.save(EmployeeTask(**asdict(task)))
-        print('saved task')
-        print(event)
         self.repository.save_event(event)
-        print('saved event')
         return task.id
 
     def handle_command(self, command: Command) -> TaskEvent:
         # Retrieve the task by ID
-        print('started handling command')
         task = self.repository.get_by_id(command.aggregate_id)
         
-        print(task)
         # If the task doesn't exist, raise an error
         if task is None:
             raise ValueError(f"Task {command.aggregate_id} not found")
 
         # Generate the appropriate event using the command handler
         event = handle_command(command, task)
-        print('event handled')
-        print(event)
         # If no event is generated (e.g., task already completed), do nothing
         if event is None:
             return
 
         # Apply the event to update the task's state
-        print('apply event')
         updated_task = apply_event(event, task)
 
-        print('updated task trying to save')
-        print(updated_task)
         # Save the updated task and the event to the repository
         self.repository.save(updated_task)
-        print('updated task trying to save event')
         self.repository.save_event(event)
         return event
 
