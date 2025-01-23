@@ -11,7 +11,7 @@ from typing import Optional, List
 from sqlmodel import func, select
 from app.models import AvailableTask, AvailableTasksPublic, EmployeeTask, TaskEvent, TaskStatus
 
-# Domain Events
+#region Domain Events
 @dataclass
 class TaskEventDomain:
     aggregate_id: UUID
@@ -28,15 +28,20 @@ class TaskCompletedEvent(TaskEventDomain):
     assigned_to_id: UUID
     task_id: UUID
 
-# @dataclass
-# class TaskSubmittedEvent(Event):
-#     pass
+@dataclass
+class TaskSubmittedEvent(TaskEventDomain):
+    pass
+
+@dataclass
+class TaskRejectedEvent(TaskEventDomain):
+    reason: str
 
 @dataclass
 class TaskCancelledEvent(TaskEventDomain):
     reason: str
+#endregion
 
-# Commands
+#region Commands
 @dataclass
 class Command:
     aggregate_id: UUID
@@ -47,14 +52,24 @@ class AssignTaskCommand:
     task_id: UUID
     title: str
     description: str
+    requires_approval: bool
 
 @dataclass
 class SubmitTaskCommand(Command):
     pass
 
 @dataclass
+class ApproveTaskCommand(Command):
+    approved_by_id: UUID
+
+@dataclass
+class RejectTaskCommand(Command):
+    reason: str
+
+@dataclass
 class CancelTaskCommand(Command):
     reason: str
+#endregion
 
 # Domain Model
 @dataclass
@@ -69,9 +84,9 @@ class EmployeeTaskDomain:
     reason: str
     version: int = 1
     status: TaskStatus = TaskStatus.ASSIGNED
-    #requires_approval: bool = False
-    #approved_by_id: UUID | None
-    #submitted_at: datetime | None
+    requires_approval: bool = False
+    approved_by_id: UUID | None
+    submitted_at: datetime | None
 
     @classmethod
     def create(cls, command: AssignTaskCommand) -> tuple['EmployeeTaskDomain', TaskAssignedEvent]:
@@ -91,8 +106,13 @@ class EmployeeTaskDomain:
                    assigned_to_id=command.assigned_to_id,
                    completed_at=None,
                    reason="",
+                   requires_approval=command.requires_approval,
+                   approved_by_id=None,
+                   submitted_at=None,
         )
         return task, event
+
+#region Event Handler
 
 # Event Handler using Single Dispatch
 @singledispatch
@@ -108,7 +128,8 @@ def _(event: TaskAssignedEvent, task: EmployeeTask | None) -> EmployeeTask:
         task_id=event.task_id,
         assigned_to_id=event.assigned_to_id,
         status=TaskStatus.ASSIGNED,
-        created_at=event.timestamp
+        created_at=event.timestamp,
+        requires_approval=task.requires_approval
     )
 
 @apply_event.register
@@ -140,7 +161,38 @@ def _(event: TaskCancelledEvent, task: EmployeeTask | None) -> EmployeeTask:
         reason=event.reason
     )
 
-# Command Handler using Single Dispatch
+@apply_event.register
+def _(event: TaskSubmittedEvent, task: EmployeeTask | None) -> EmployeeTask:
+    return EmployeeTask(
+        id=task.id,
+        title=task.title,
+        description=task.description,
+        version=task.version,
+        task_id=task.task_id,
+        assigned_to_id=task.assigned_to_id,
+        status=TaskStatus.WAITING_APPROVAL,
+        created_at=task.created_at,
+        completed_at=task.created_at,
+        submitted_at=datetime.now()
+    )
+
+@apply_event.register
+def _(event: TaskRejectedEvent, task: EmployeeTask | None) -> EmployeeTask:
+    return EmployeeTask(
+        id=task.id,
+        title=task.title,
+        description=task.description,
+        version=task.version,
+        task_id=task.task_id,
+        assigned_to_id=task.assigned_to_id,
+        status=TaskStatus.REJECTED,
+        created_at=task.created_at,
+        completed_at=datetime.now(),
+        reason=event.reason
+    )
+#endregion
+
+#region Command Handler using Single Dispatch
 @singledispatch
 def handle_command(command: Command, task: EmployeeTask | None) -> Optional[TaskEventDomain]:
     raise ValueError(f"Unknown command type: {type(command)}")
@@ -158,20 +210,57 @@ def _(command: AssignTaskCommand, task: EmployeeTask | None) -> TaskAssignedEven
     )
 
 @handle_command.register
-def _(command: SubmitTaskCommand, task: EmployeeTask | None) -> TaskCompletedEvent:
-    if task.status == TaskStatus.COMPLETED:
-        return None
-    
-    return TaskCompletedEvent(
+def _(command: SubmitTaskCommand, task: EmployeeTask | None) -> TaskCompletedEvent | TaskSubmittedEvent:
+    if task.status == TaskStatus.WAITING_APPROVAL | task.status == TaskStatus.ASSIGNED:
+        if task.requires_approval:
+            return TaskSubmittedEvent(
+            aggregate_id=task.id,
+            timestamp=datetime.now(),
+            version=task.version
+            )
+        return TaskCompletedEvent(
+            aggregate_id=task.id,
+            timestamp=datetime.now(),
+            version=task.version,
+            assigned_to_id=task.assigned_to_id,
+            task_id=task.task_id
+        )
+    return None
+
+@handle_command.register
+def _(command: ApproveTaskCommand, task: EmployeeTask | None) -> TaskCompletedEvent:
+    if task.status == TaskStatus.WAITING_APPROVAL:
+        return TaskCompletedEvent(
+            aggregate_id=task.id,
+            timestamp=datetime.now(),
+            version=task.version,
+            assigned_to_id=task.assigned_to_id,
+            task_id=task.task_id
+        )
+    return None
+
+@handle_command.register
+def _(command: RejectTaskCommand, task: EmployeeTask | None) -> TaskRejectedEvent:
+    if task.status == TaskStatus.WAITING_APPROVAL:
+        return TaskRejectedEvent(
+            aggregate_id=task.id,
+            timestamp=datetime.now(),
+            version=task.version,
+            reason=command.reason
+        )
+    return None
+
+@handle_command.register
+def _(command: CancelTaskCommand, task: EmployeeTask) -> TaskCancelledEvent:
+    return TaskCancelledEvent(
         aggregate_id=task.id,
         timestamp=datetime.now(),
         version=task.version,
-        assigned_to_id=task.assigned_to_id,
-        task_id=task.task_id
+        reason=command.reason
     )
+#endregion
 
-
-# Repository Interface
+#region Repository Interface
 class TaskRepository:
     def save(self, task: EmployeeTask) -> None:
         raise NotImplementedError
@@ -210,10 +299,14 @@ class PostgresTaskRepository(TaskRepository):
         # Handle specific event types for additional fields
         if isinstance(event, TaskAssignedEvent):
             event_data.update({"assigned_to_id": event.assigned_to_id, "task_id": event.task_id, "event_type":"TaskAssignedEvent"})
+        elif isinstance(event, TaskSubmittedEvent):
+            event_data.update({"event_type":"TaskSubmittedEvent"})
         elif isinstance(event, TaskCompletedEvent):
             event_data.update({"assigned_to_id": event.assigned_to_id, "task_id": event.task_id, "event_type":"TaskCompletedEvent"})
         elif isinstance(event, TaskCancelledEvent):
             event_data.update({"reason": event.reason, "event_type":"TaskCancelledEvent"})
+        elif isinstance(event, TaskRejectedEvent):
+            event_data.update({"reason": event.reason, "event_type":"TaskRejectedEvent"})
         self.db_session.execute(insert(TaskEvent).values(event_data))
         self.db_session.commit()
 
@@ -226,19 +319,20 @@ class PostgresTaskRepository(TaskRepository):
         query = select(TaskEvent).filter_by(aggregate_id=id).order_by(TaskEvent.timestamp)
         result = self.db_session.execute(query).scalars().all()
         return result
+    
+    def get_user_tasks(self, id: UUID) -> List[EmployeeTask]:
+        query = select(EmployeeTask).where(EmployeeTask.assigned_to_id==id)
+        result = self.db_session.execute(query).scalars().all()
+        return result
 
-@handle_command.register
-def _(command: CancelTaskCommand, task: EmployeeTask) -> TaskCancelledEvent:
-    return TaskCancelledEvent(
-        aggregate_id=task.id,
-        timestamp=datetime.now(),
-        version=task.version,
-        reason=command.reason
-    )
+#endregion
 
 class TaskService:
     def __init__(self, repository: TaskRepository):
         self.repository = repository
+
+    def get_employee_taks(self, id: UUID) -> List[EmployeeTask]:
+        return self.repository.get_user_tasks(id)
 
     def get_aggregates(self, id: UUID) -> List[TaskEvent]:
         return self.repository.get_events(id)

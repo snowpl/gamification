@@ -243,8 +243,8 @@ class AvailableTasksPublic(SQLModel):
 class TaskStatus(Enum):
     ASSIGNED = "Assigned"
     #IN_PROGRESS = "In Progress"
-    #WAITING_APPROVAL = "Waiting Approval"
-    #REJECTED = "Rejected"
+    WAITING_APPROVAL = "Waiting Approval"
+    REJECTED = "Rejected"
     COMPLETED = "Completed"
     CANCELED = "Canceled"
 
@@ -256,7 +256,9 @@ class EmployeeTaskBase(SQLModel):
     description: str| None = Field(default=None, max_length=500)
     version: int = 1
     completed_at: datetime | None
-    reason: str| None = Field(default=None, max_length=500)
+    reason: str| None = Field(default=None, max_length=500),
+    requires_approval: bool = False
+    submitted_at: datetime | None
 
 # Database model, database table inferred from class name
 class EmployeeTask(EmployeeTaskBase, table=True):

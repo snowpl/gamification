@@ -8,10 +8,10 @@ from fastapi import APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy import select, insert
 from typing import Optional, List
-from app.api.routes.tasks_service import AssignTaskCommand, CancelTaskCommand, SubmitTaskCommand
+from app.api.routes.tasks_service import ApproveTaskCommand, ApprovedTaskCommand, AssignTaskCommand, CancelTaskCommand, RejectTaskCommand, SubmitTaskCommand
 from sqlmodel import func, select
 from app.api.deps import CurrentUser, SessionDep, TaskServiceDep
-from app.models import AvailableTask, AvailableTasksPublic, TaskEvent, TaskStatus
+from app.models import AvailableTask, AvailableTasksPublic, EmployeeTask, TaskEvent, TaskStatus
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -67,6 +67,21 @@ def submit_task(taskSerivce: TaskServiceDep, taskCommand: SubmitTaskCommand) -> 
     tasks = taskSerivce.handle_command(taskCommand)
     return tasks
 
+@router.patch("/approve-task", response_model=TaskEvent)
+def submit_task(taskSerivce: TaskServiceDep, taskCommand: ApproveTaskCommand) -> Any:
+    """
+    Submit task.
+    """
+    tasks = taskSerivce.handle_command(taskCommand)
+    return tasks
+
+@router.patch("/reject-task", response_model=TaskEvent)
+def submit_task(taskSerivce: TaskServiceDep, taskCommand: RejectTaskCommand) -> Any:
+    """
+    Submit task.
+    """
+    tasks = taskSerivce.handle_command(taskCommand)
+    return tasks
 
 @router.patch("/cancel-task", response_model=TaskEvent)
 def cancel_task(taskSerivce: TaskServiceDep, taskCommand: CancelTaskCommand) -> Any:
@@ -76,7 +91,15 @@ def cancel_task(taskSerivce: TaskServiceDep, taskCommand: CancelTaskCommand) -> 
     tasks = taskSerivce.handle_command(taskCommand)
     return tasks
 
-@router.get("/{id}", response_model=list[TaskEvent])
+@router.get("/employee-tasks/{id}", response_model=List[EmployeeTask])
+def get_employee_tasks(taskService: TaskServiceDep, id: UUID) -> Any:
+    """
+    Get employee tasks.
+    """
+    tasks = taskService.get_employee_tasks(id)
+    return tasks
+
+@router.get("/events/{id}", response_model=list[TaskEvent])
 def get_tasks_event(taskService: TaskServiceDep, id: UUID) -> Any:
     """
     Get events.
