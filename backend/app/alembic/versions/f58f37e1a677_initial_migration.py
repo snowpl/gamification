@@ -1,8 +1,8 @@
-"""Initial Migration
+"""Initial migration
 
-Revision ID: 1a156fbcafff
+Revision ID: f58f37e1a677
 Revises: 
-Create Date: 2025-01-23 11:11:58.276087
+Create Date: 2025-01-23 14:03:03.545065
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel.sql.sqltypes
 
 
 # revision identifiers, used by Alembic.
-revision = '1a156fbcafff'
+revision = 'f58f37e1a677'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -28,13 +28,15 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('taskevent',
+    sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('aggregate_id', sa.Uuid(), nullable=False),
     sa.Column('timestamp', sa.DateTime(), nullable=False),
     sa.Column('version', sa.Integer(), nullable=False),
-    sa.Column('assigned_to_id', sa.Uuid(), nullable=False),
-    sa.Column('task_id', sa.Uuid(), nullable=False),
-    sa.Column('reason', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.PrimaryKeyConstraint('aggregate_id')
+    sa.Column('event_type', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
+    sa.Column('assigned_to_id', sa.Uuid(), nullable=True),
+    sa.Column('task_id', sa.Uuid(), nullable=True),
+    sa.Column('reason', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('department',
     sa.Column('id', sa.Uuid(), nullable=False),
@@ -64,11 +66,11 @@ def upgrade():
     sa.Column('task_id', sa.Uuid(), nullable=True),
     sa.Column('status', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('title', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('title', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
+    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
     sa.Column('version', sa.Integer(), nullable=False),
     sa.Column('completed_at', sa.DateTime(), nullable=True),
-    sa.Column('reason', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('reason', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('assigned_to_id', sa.Uuid(), nullable=False),
     sa.Column('approved_by_id', sa.Uuid(), nullable=True),
@@ -97,7 +99,7 @@ def upgrade():
     )
     op.create_table('availabletask',
     sa.Column('title', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
     sa.Column('requires_approval', sa.Boolean(), nullable=False),
     sa.Column('approved', sa.Boolean(), nullable=False),
     sa.Column('department_xp', sa.Integer(), nullable=False),
