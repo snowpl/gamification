@@ -1,7 +1,7 @@
 import uuid
 from requests import Session
 from app import crud
-from app.models import AvailableTaskCreate, DepartmentCreate, EmployeeTask, SkillCreate, TaskCreate
+from app.models import AvailableTaskCreate, DepartmentCreate, EmployeeTask, SkillCreate
 
 def create_marketing_department(session: Session, company_id: uuid) -> EmployeeTask:
     marketing_department = DepartmentCreate(

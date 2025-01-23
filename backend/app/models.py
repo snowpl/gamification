@@ -1,9 +1,10 @@
-import datetime
+from datetime import datetime
 from typing import Optional
-import uuid
+from uuid import UUID, uuid4
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel, DateTime
 from sqlalchemy.orm import RelationshipProperty
+from sqlalchemy import Column, Enum
 
 # Shared properties
 class UserBase(SQLModel):
@@ -16,8 +17,8 @@ class UserBase(SQLModel):
 # Properties to receive via API on creation
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=40)
-    company_id: uuid.UUID
-    department_id: uuid.UUID
+    company_id: UUID
+    department_id: UUID
 
 class UserRegister(SQLModel):
     email: EmailStr = Field(max_length=255)
@@ -41,15 +42,15 @@ class UpdatePassword(SQLModel):
 
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
     company: "Company" = Relationship(back_populates="employees")
     department: "Department" = Relationship(back_populates="employees")
-    company_id: uuid.UUID = Field(
+    company_id: UUID = Field(
         foreign_key="company.id", nullable=False, ondelete="CASCADE"
     )
-    department_id: uuid.UUID = Field(foreign_key="department.id")
+    department_id: UUID = Field(foreign_key="department.id")
     employee_tasks: list["EmployeeTask"] = Relationship(
         sa_relationship=RelationshipProperty(
             "EmployeeTask",
@@ -66,7 +67,7 @@ class User(UserBase, table=True):
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
-    id: uuid.UUID
+    id: UUID
 
 
 class UsersPublic(SQLModel):
@@ -92,9 +93,9 @@ class ItemUpdate(ItemBase):
 
 # Database model, database table inferred from class name
 class Item(ItemBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     title: str = Field(max_length=255)
-    owner_id: uuid.UUID = Field(
+    owner_id: UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
     owner: User | None = Relationship(back_populates="items")
@@ -102,8 +103,8 @@ class Item(ItemBase, table=True):
 
 # Properties to return via API, id is always required
 class ItemPublic(ItemBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
+    id: UUID
+    owner_id: UUID
 
 
 class ItemsPublic(SQLModel):
@@ -133,7 +134,7 @@ class NewPassword(SQLModel):
 
 #Shared properties
 class CompanyBase(SQLModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str
     current_xp: int = 0
     level: int = 0
@@ -152,27 +153,27 @@ class CompanyCreate(CompanyBase):
 
 #Shared properties
 class SkillBase(SQLModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str = Field(min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=500)
     current_xp: int = 0
 
 #Database model
 class Skill(SkillBase, table=True):
-    user_id: Optional[uuid.UUID] = Field(
+    user_id: Optional[UUID] = Field(
         foreign_key="user.id", nullable=True, ondelete="CASCADE"
     )
     user: Optional["User"] = Relationship(back_populates="user_skills")
-    department_id: uuid.UUID = Field(
+    department_id: UUID = Field(
         foreign_key="department.id", nullable=False, ondelete="CASCADE"
     )
     department: "Department" = Relationship(back_populates="department_skills")
-    employee_tasks: list["EmployeeTask"] = Relationship(back_populates="skill", cascade_delete=True)
+    employee_tasks: list["AvailableTask"] = Relationship(back_populates="skill", cascade_delete=True)
 
 #Skill properties to recieve on creation
 class SkillCreate(SkillBase):
-    department_id: uuid.UUID
-    user_id: Optional[uuid.UUID] = None  # Make user_id optional
+    department_id: UUID
+    user_id: Optional[UUID] = None  # Make user_id optional
 
 # #Shared properties
 # class LevelBase(SQLModel):
@@ -186,29 +187,29 @@ class SkillCreate(SkillBase):
 
 # # Shared properties
 class DepartmentBase(SQLModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str = Field(min_length=1, max_length=255)
     current_xp: int = 0
     level: int = 0
 
 #Database model
 class Department(DepartmentBase, table=True):
-    company_id: uuid.UUID = Field(
+    company_id: UUID = Field(
         foreign_key="company.id", nullable=False, ondelete="CASCADE"
     )
     company: "Company" = Relationship(back_populates="departments")
     employees: list["User"] = Relationship(back_populates="department", cascade_delete=True)
-    tasks: list["EmployeeTask"] = Relationship(back_populates="department", cascade_delete=True)
+    tasks: list["AvailableTask"] = Relationship(back_populates="department", cascade_delete=True)
     department_skills: list["Skill"] = Relationship(back_populates="department", cascade_delete=True)
 
 #Properties to receive on department creation
 class DepartmentCreate(DepartmentBase):
-    company_id: uuid.UUID
+    company_id: UUID
 
 # # Shared properties
 class AvailableTaskBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
-    description: str
+    description: str| None = Field(default=None, max_length=500)
     requires_approval: bool = False
     approved: bool = False
     department_xp: int = 0
@@ -218,36 +219,49 @@ class AvailableTaskBase(SQLModel):
     is_active: bool = True
 
 class AvailableTask(AvailableTaskBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    department_id: uuid.UUID = Field(
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    department_id: UUID = Field(
         foreign_key="department.id", nullable=False, ondelete="CASCADE"
     )
     department: "Department" = Relationship(back_populates="tasks")
-    skill_id: uuid.UUID = Field(
+    skill_id: UUID = Field(
         foreign_key="skill.id", nullable=False, ondelete="CASCADE"
     )
     skill: "Skill" = Relationship(back_populates="employee_tasks")
-    company_id: uuid.UUID = Field(
+    company_id: UUID = Field(
         foreign_key="company.id", nullable=False, ondelete="CASCADE"
     )
 
 # Properties to return via API, id is always required
 class AvailableTaskPublic(AvailableTaskBase):
-    id: uuid.UUID
+    id: UUID
 
 class AvailableTasksPublic(SQLModel):
     data: list[AvailableTaskPublic]
     count: int
 
+class TaskStatus(Enum):
+    ASSIGNED = "Assigned"
+    #IN_PROGRESS = "In Progress"
+    #WAITING_APPROVAL = "Waiting Approval"
+    #REJECTED = "Rejected"
+    COMPLETED = "Completed"
+    CANCELED = "Canceled"
+
 class EmployeeTaskBase(SQLModel):
-    task_id: uuid.UUID
+    task_id: UUID | None
     status: str
-    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now, nullable=False)
+    created_at: datetime = Field(default_factory=datetime.now, nullable=False),
+    title: str| None = Field(default=None, max_length=500)
+    description: str| None = Field(default=None, max_length=500)
+    version: int = 1
+    completed_at: datetime | None
+    reason: str| None = Field(default=None, max_length=500)
 
 # Database model, database table inferred from class name
 class EmployeeTask(EmployeeTaskBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    assigned_to_id: uuid.UUID = Field(
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    assigned_to_id: UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
     assigned_to: "User" = Relationship(
@@ -256,7 +270,7 @@ class EmployeeTask(EmployeeTaskBase, table=True):
             back_populates="employee_tasks",
             foreign_keys='[EmployeeTask.assigned_to_id]')
     )
-    approved_by_id: Optional[uuid.UUID] = Field(
+    approved_by_id: Optional[UUID] = Field(
         foreign_key="user.id", nullable=True, ondelete="CASCADE"
     )
     approved_by: Optional["User"] = Relationship(
@@ -265,19 +279,29 @@ class EmployeeTask(EmployeeTaskBase, table=True):
             back_populates="approved_tasks",
             foreign_keys='[EmployeeTask.approved_by_id]')
     )
-    company_id: uuid.UUID = Field(
-        foreign_key="company.id", nullable=False, ondelete="CASCADE"
-    )
+    # company_id: UUID = Field(
+    #     foreign_key="company.id", nullable=False, ondelete="CASCADE"
+    # )
+
+class TaskEvent(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    aggregate_id: UUID
+    timestamp: datetime
+    version: int
+    event_type: str = Field(max_length=100)
+    assigned_to_id: UUID| None
+    task_id: UUID| None
+    reason: str| None = Field(default=None, max_length=500)
 
 # Properties to receive on item creation
 class AvailableTaskCreate(AvailableTaskBase):
-    department_id: uuid.UUID
-    skill_id: uuid.UUID
-    company_id: uuid.UUID
+    department_id: UUID
+    skill_id: UUID
+    company_id: UUID
 
 #Properties to recieve on task submit
 class TaskSubmit(EmployeeTaskBase):
-    subbmited_by: uuid.UUID = Field(
+    subbmited_by: UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
 
