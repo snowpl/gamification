@@ -21,7 +21,7 @@ def read_tasks(
     session: SessionDep, current_user: CurrentUser, skip: int = 0, limit: int = 100, only_active: bool = True
 ) -> Any:
     """
-    Retrieve tasks.
+    Retrieve available tasks.
     """
     if current_user.is_superuser:
         count_statement = (
@@ -97,7 +97,7 @@ def get_employee_tasks(taskService: TaskServiceDep, id: UUID) -> Any:
     Get employee tasks.
     """
     tasks = taskService.get_employee_task(id)
-    return tasks
+    return {"data": tasks}
 
 @router.get("/events/{id}", response_model=list[TaskEvent])
 def get_tasks_event(taskService: TaskServiceDep, id: UUID) -> Any:

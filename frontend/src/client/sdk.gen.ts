@@ -4,6 +4,7 @@ import type { CancelablePromise } from "./core/CancelablePromise"
 import { OpenAPI } from "./core/OpenAPI"
 import { request as __request } from "./core/request"
 import type {
+  CompaniesReadCompanyResponse,
   ItemsReadItemsData,
   ItemsReadItemsResponse,
   ItemsCreateItemData,
@@ -23,6 +24,24 @@ import type {
   LoginResetPasswordResponse,
   LoginRecoverPasswordHtmlContentData,
   LoginRecoverPasswordHtmlContentResponse,
+  PrivateCreateUserData,
+  PrivateCreateUserResponse,
+  TasksReadTasksData,
+  TasksReadTasksResponse,
+  TasksAssignTaskData,
+  TasksAssignTaskResponse,
+  TasksSubmitTaskData,
+  TasksSubmitTaskResponse,
+  TasksSubmitTask1Data,
+  TasksSubmitTask1Response,
+  TasksSubmitTask2Data,
+  TasksSubmitTask2Response,
+  TasksCancelTaskData,
+  TasksCancelTaskResponse,
+  TasksGetEmployeeTasksData,
+  TasksGetEmployeeTasksResponse,
+  TasksGetTasksEventData,
+  TasksGetTasksEventResponse,
   UsersReadUsersData,
   UsersReadUsersResponse,
   UsersCreateUserData,
@@ -45,6 +64,21 @@ import type {
   UtilsTestEmailResponse,
   UtilsHealthCheckResponse,
 } from "./types.gen"
+
+export class CompaniesService {
+  /**
+   * Read Company
+   * Retrieve company.
+   * @returns CompanyRead Successful Response
+   * @throws ApiError
+   */
+  public static readCompany(): CancelablePromise<CompaniesReadCompanyResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/company/",
+    })
+  }
+}
 
 export class ItemsService {
   /**
@@ -264,6 +298,215 @@ export class LoginService {
       url: "/api/v1/password-recovery-html-content/{email}",
       path: {
         email: data.email,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+}
+
+export class PrivateService {
+  /**
+   * Create User
+   * Create a new user.
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns UserPublic Successful Response
+   * @throws ApiError
+   */
+  public static createUser(
+    data: PrivateCreateUserData,
+  ): CancelablePromise<PrivateCreateUserResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/private/users/",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+}
+
+export class TasksService {
+  /**
+   * Read Tasks
+   * Retrieve available tasks.
+   * @param data The data for the request.
+   * @param data.skip
+   * @param data.limit
+   * @param data.onlyActive
+   * @returns AvailableTasksPublic Successful Response
+   * @throws ApiError
+   */
+  public static readTasks(
+    data: TasksReadTasksData = {},
+  ): CancelablePromise<TasksReadTasksResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/tasks/",
+      query: {
+        skip: data.skip,
+        limit: data.limit,
+        only_active: data.onlyActive,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Assign Task
+   * Assign task.
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns string Successful Response
+   * @throws ApiError
+   */
+  public static assignTask(
+    data: TasksAssignTaskData,
+  ): CancelablePromise<TasksAssignTaskResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/tasks/assign-task",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Submit Task
+   * Submit task.
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns TaskEventDomain Successful Response
+   * @throws ApiError
+   */
+  public static submitTask(
+    data: TasksSubmitTaskData,
+  ): CancelablePromise<TasksSubmitTaskResponse> {
+    return __request(OpenAPI, {
+      method: "PATCH",
+      url: "/api/v1/tasks/submit-task",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Submit Task
+   * Submit task.
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns TaskEventDomain Successful Response
+   * @throws ApiError
+   */
+  public static submitTask1(
+    data: TasksSubmitTask1Data,
+  ): CancelablePromise<TasksSubmitTask1Response> {
+    return __request(OpenAPI, {
+      method: "PATCH",
+      url: "/api/v1/tasks/approve-task",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Submit Task
+   * Submit task.
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns TaskEventDomain Successful Response
+   * @throws ApiError
+   */
+  public static submitTask2(
+    data: TasksSubmitTask2Data,
+  ): CancelablePromise<TasksSubmitTask2Response> {
+    return __request(OpenAPI, {
+      method: "PATCH",
+      url: "/api/v1/tasks/reject-task",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Cancel Task
+   * Cancel task.
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns TaskEventDomain Successful Response
+   * @throws ApiError
+   */
+  public static cancelTask(
+    data: TasksCancelTaskData,
+  ): CancelablePromise<TasksCancelTaskResponse> {
+    return __request(OpenAPI, {
+      method: "PATCH",
+      url: "/api/v1/tasks/cancel-task",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Get Employee Tasks
+   * Get employee tasks.
+   * @param data The data for the request.
+   * @param data.id
+   * @returns EmployeeTask Successful Response
+   * @throws ApiError
+   */
+  public static getEmployeeTasks(
+    data: TasksGetEmployeeTasksData,
+  ): CancelablePromise<TasksGetEmployeeTasksResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/tasks/employee-tasks/{id}",
+      path: {
+        id: data.id,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Get Tasks Event
+   * Get events.
+   * @param data The data for the request.
+   * @param data.id
+   * @returns TaskEvent Successful Response
+   * @throws ApiError
+   */
+  public static getTasksEvent(
+    data: TasksGetTasksEventData,
+  ): CancelablePromise<TasksGetTasksEventResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/tasks/events/{id}",
+      path: {
+        id: data.id,
       },
       errors: {
         422: "Validation Error",

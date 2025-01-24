@@ -274,6 +274,49 @@ def _(command: CancelTaskCommand, task: EmployeeTask) -> TaskCancelledEvent:
 #endregion
 
 #region Repository Interface
+@singledispatch
+def update_event_data(event, event_data):
+    raise ValueError(f"Unhandled event type: {type(event)}")
+
+@update_event_data.register
+def _(event: TaskAssignedEvent, event_data: dict):
+    event_data.update({
+        "assigned_to_id": event.assigned_to_id,
+        "task_id": event.task_id,
+        "event_type": "TaskAssignedEvent"
+    })
+
+# Handle specific event types for additional fields
+@update_event_data.register
+def _(event: TaskSubmittedEvent, event_data: dict):
+    event_data.update({
+        "event_type": "TaskSubmittedEvent"
+    })
+
+@update_event_data.register
+def _(event: TaskCompletedEvent, event_data: dict):
+    event_data.update({
+        "assigned_to_id": event.assigned_to_id,
+        "task_id": event.task_id,
+        "event_type": "TaskCompletedEvent",
+        "approved_by_id": event.approved_by_id
+    })
+
+@update_event_data.register
+def _(event: TaskCancelledEvent, event_data: dict):
+    event_data.update({
+        "reason": event.reason,
+        "event_type": "TaskCancelledEvent"
+    })
+
+@update_event_data.register
+def _(event: TaskRejectedEvent, event_data: dict):
+     event_data.update({
+        "reason": event.reason,
+        "event_type": "TaskRejectedEvent",
+        "approved_by_id": event.approved_by_id
+    })
+
 class TaskRepository:
     def save(self, task: EmployeeTask) -> None:
         raise NotImplementedError
@@ -309,17 +352,8 @@ class PostgresTaskRepository(TaskRepository):
             "version": event.version
         }
 
-        # Handle specific event types for additional fields
-        if isinstance(event, TaskAssignedEvent):
-            event_data.update({"assigned_to_id": event.assigned_to_id, "task_id": event.task_id, "event_type":"TaskAssignedEvent"})
-        elif isinstance(event, TaskSubmittedEvent):
-            event_data.update({"event_type":"TaskSubmittedEvent"})
-        elif isinstance(event, TaskCompletedEvent):
-            event_data.update({"assigned_to_id": event.assigned_to_id, "task_id": event.task_id, "event_type":"TaskCompletedEvent", "approved_by_id": event.approved_by_id})
-        elif isinstance(event, TaskCancelledEvent):
-            event_data.update({"reason": event.reason, "event_type":"TaskCancelledEvent"})
-        elif isinstance(event, TaskRejectedEvent):
-            event_data.update({"reason": event.reason, "event_type":"TaskRejectedEvent", "approved_by_id": event.approved_by_id})
+        # Call the handler
+        update_event_data(event, event_data)
         self.db_session.execute(insert(TaskEvent).values(event_data))
         self.db_session.commit()
         
