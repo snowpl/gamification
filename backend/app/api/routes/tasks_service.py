@@ -368,8 +368,10 @@ class PostgresTaskRepository(TaskRepository):
         return result
     
     def get_user_tasks(self, id: UUID) -> List[EmployeeTask]:
+        print('doing a query')
         query = select(EmployeeTask).where(EmployeeTask.assigned_to_id==id)
         result = self.db_session.execute(query).scalars().all()
+        print(result)
         return result
 
 #endregion

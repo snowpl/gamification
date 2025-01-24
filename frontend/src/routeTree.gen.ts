@@ -17,11 +17,10 @@ import { Route as RecoverPasswordImport } from './routes/recover-password'
 import { Route as LoginImport } from './routes/login'
 import { Route as LayoutImport } from './routes/_layout'
 import { Route as LayoutIndexImport } from './routes/_layout/index'
+import { Route as LayoutTasksImport } from './routes/_layout/tasks'
 import { Route as LayoutSettingsImport } from './routes/_layout/settings'
 import { Route as LayoutItemsImport } from './routes/_layout/items'
 import { Route as LayoutAdminImport } from './routes/_layout/admin'
-import { Route as LayoutTasksImport } from './routes/_layout/tasks'
-import { get } from 'http'
 
 // Create/Update Routes
 
@@ -55,6 +54,11 @@ const LayoutIndexRoute = LayoutIndexImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const LayoutTasksRoute = LayoutTasksImport.update({
+  path: '/tasks',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
 const LayoutSettingsRoute = LayoutSettingsImport.update({
   path: '/settings',
   getParentRoute: () => LayoutRoute,
@@ -67,11 +71,6 @@ const LayoutItemsRoute = LayoutItemsImport.update({
 
 const LayoutAdminRoute = LayoutAdminImport.update({
   path: '/admin',
-  getParentRoute: () => LayoutRoute,
-} as any)
-
-const LayoutTaskRoute = LayoutTasksImport.update({
-  path: '/tasks',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -111,12 +110,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsImport
       parentRoute: typeof LayoutImport
     }
-    '/_layout/': {
-      preLoaderRoute: typeof LayoutIndexImport
-      parentRoute: typeof LayoutImport
-    },
     '/_layout/tasks': {
       preLoaderRoute: typeof LayoutTasksImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/': {
+      preLoaderRoute: typeof LayoutIndexImport
       parentRoute: typeof LayoutImport
     }
   }
@@ -129,8 +128,8 @@ export const routeTree = rootRoute.addChildren([
     LayoutAdminRoute,
     LayoutItemsRoute,
     LayoutSettingsRoute,
+    LayoutTasksRoute,
     LayoutIndexRoute,
-    LayoutTaskRoute,
   ]),
   LoginRoute,
   RecoverPasswordRoute,

@@ -16,11 +16,9 @@ import {
   import { z } from "zod"
   
   import { TasksService } from "../../client"
-  import ActionsMenu from "../../components/Common/ActionsMenu"
-  import Navbar from "../../components/Common/Navbar"
+  import Dropdown from "../../components/Tasks/Dropdown"
   import AddTask from "../../components/Items/AddItem"
   import { PaginationFooter } from "../../components/Common/PaginationFooter.tsx"
-  import React from "react"
   import useAuth from "../../hooks/useAuth"
 
   const tasksSearchSchema = z.object({
@@ -42,6 +40,14 @@ import {
       queryKey: ["tasks", { page }],
     }
   }
+
+  function getAvailableTasks() {
+      return {
+        queryFn: () =>
+          TasksService.readTasks({ onlyActive: true }),
+        queryKey: ["availableTasks"],
+      }
+    }
   
   function TasksTable() {
     const queryClient = useQueryClient()
@@ -129,13 +135,19 @@ import {
   }
   
   function Tasks() {
+    const {
+        data: avialbleTasks,
+      } = useQuery({
+        ...getAvailableTasks(),
+      })
+
     return (
       <Container maxW="full">
         <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
           Task Management
         </Heading>
   
-        <Navbar type={"Task"} addModalAs={AddTask} />
+        <Dropdown type={"Task"} taskList={avialbleTasks} addModalAs={AddTask} />
         <TasksTable />
       </Container>
     )

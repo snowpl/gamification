@@ -3,7 +3,7 @@ from sqlmodel import SQLModel
 from app import crud
 from app.core.config import settings
 from app.models import Company, CompanyCreate, Department, DepartmentCreate, Skill, SkillCreate, User, UserCreate
-from app.core.data_provider import create_marketing_department
+from app.core.data_provider import create_marketing_department, create_sales_department
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -43,7 +43,7 @@ def init_db(session: Session) -> None:
         logger.info("No department found")
         marketing = create_marketing_department(session=session, company_id=company.id)
         logger.info(marketing)
-        
+
         delivery_department = DepartmentCreate(
             name="Delivery",
             company_id=company.id
@@ -68,11 +68,8 @@ def init_db(session: Session) -> None:
         )
         department = crud.create_department(session=session, department_in=cs_department)
 
-        sales_department = DepartmentCreate(
-            name="Sales",
-            company_id=company.id
-        )
-        department = crud.create_department(session=session, department_in=sales_department)
+        sales = create_sales_department(session=session, company_id=company.id)
+        logger.info(sales)
 
     user = session.exec(
         select(User).where(User.email == settings.FIRST_SUPERUSER)

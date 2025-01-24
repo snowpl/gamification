@@ -5,13 +5,13 @@ from uuid import UUID, uuid4
 from dataclasses import dataclass
 from functools import singledispatch
 from fastapi import APIRouter
-from sqlalchemy.orm import Session
-from sqlalchemy import select, insert
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import select, insert, func
 from typing import Optional, List
 from app.api.routes.tasks_service import ApproveTaskCommand, AssignTaskCommand, CancelTaskCommand, Command, RejectTaskCommand, SubmitTaskCommand, TaskEventDomain
 from sqlmodel import func, select
 from app.api.deps import CurrentUser, SessionDep, TaskServiceDep
-from app.models import AvailableTask, AvailableTasksPublic, EmployeeTask, TaskEvent, TaskStatus
+from app.models import AvailableTask, AvailableTaskPublic, AvailableTasksPublic, Department, EmployeeTask, TaskEvent, TaskStatus
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -23,29 +23,57 @@ def read_tasks(
     """
     Retrieve available tasks.
     """
-    if current_user.is_superuser:
-        count_statement = (
+    # if current_user.is_superuser:
+    count_statement = (
             select(func.count())
             .select_from(AvailableTask)
             .where(AvailableTask.is_active == only_active)
         )
-        count = session.exec(count_statement).one()
-        statement = select(AvailableTask).where(AvailableTask.is_active == only_active).offset(skip).limit(limit)
-        tasks = session.exec(statement).all()
-    else:
-        count_statement = (
-            select(func.count())
-            .select_from(AvailableTask)
-            .where(AvailableTask.company_id == current_user.company_id & AvailableTask.is_active == only_active)
-        )
-        count = session.exec(count_statement).one()
-        statement = (
-            select(AvailableTask)
-            .where(AvailableTask.company_id == current_user.company_id & AvailableTask.is_active == only_active)
+    count = session.exec(count_statement).one()
+    statement = (select(
+                AvailableTask, 
+                Department.name.label("department_name"), 
+                Department.id.label("department_id")
+            )
+            .join(Department, Department.id == AvailableTask.department_id)
+            .where(AvailableTask.is_active == only_active)
             .offset(skip)
             .limit(limit)
         )
-        tasks = session.exec(statement).all()
+    result = session.exec(statement).all()
+    
+    print(result)
+    tasks = [
+        AvailableTaskPublic(
+            id=row.id,
+            title=row.title,
+            description=row.description,
+            requires_approval=row.requires_approval,
+            department_id=department_id,
+            department_name=department_name,
+            is_active=row.is_active,
+            department_xp= row.department_xp,
+            skill_xp = row.skill_xp,
+            company_xp = row.company_xp,
+            person_xp = row.person_xp
+        )
+        for row, department_name, department_id in result
+    ]
+    print(tasks)
+    # else:
+    #     count_statement = (
+    #         select(func.count())
+    #         .select_from(AvailableTask)
+    #         .where(AvailableTask.company_id == current_user.company_id & AvailableTask.is_active == only_active)
+    #     )
+    #     count = session.exec(count_statement).one()
+    #     statement = (
+    #         select(AvailableTask)
+    #         .where(AvailableTask.company_id == current_user.company_id & AvailableTask.is_active == only_active)
+    #         .offset(skip)
+    #         .limit(limit)
+    #     )
+    #     tasks = session.exec(statement).all()
 
     return AvailableTasksPublic(data=tasks, count=count)
 
@@ -97,7 +125,7 @@ def get_employee_tasks(taskService: TaskServiceDep, id: UUID) -> Any:
     Get employee tasks.
     """
     tasks = taskService.get_employee_task(id)
-    return {"data": tasks}
+    return tasks
 
 @router.get("/events/{id}", response_model=list[TaskEvent])
 def get_tasks_event(taskService: TaskServiceDep, id: UUID) -> Any:

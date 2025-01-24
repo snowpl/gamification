@@ -19,6 +19,8 @@ export type AvailableTaskPublic = {
   person_xp?: number
   is_active?: boolean
   id: string
+  department_id: string
+  department_name: string
 }
 
 export type AvailableTasksPublic = {

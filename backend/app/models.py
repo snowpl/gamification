@@ -235,6 +235,10 @@ class AvailableTask(AvailableTaskBase, table=True):
 # Properties to return via API, id is always required
 class AvailableTaskPublic(AvailableTaskBase):
     id: UUID
+    department_id: UUID
+    department_name: str
+    #skill_id: UUID
+    #company_id: UUID
 
 class AvailableTasksPublic(SQLModel):
     data: list[AvailableTaskPublic]
