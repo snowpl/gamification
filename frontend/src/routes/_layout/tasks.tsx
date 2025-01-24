@@ -17,7 +17,6 @@ import {
   
   import { TasksService } from "../../client"
   import Dropdown from "../../components/Tasks/Dropdown"
-  import AddTask from "../../components/Items/AddItem"
   import { PaginationFooter } from "../../components/Common/PaginationFooter.tsx"
   import useAuth from "../../hooks/useAuth"
 
@@ -147,7 +146,7 @@ import {
           Task Management
         </Heading>
   
-        <Dropdown type={"Task"} taskList={avialbleTasks} addModalAs={AddTask} />
+        <Dropdown taskList={avialbleTasks} />
         <TasksTable />
       </Container>
     )
