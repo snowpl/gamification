@@ -88,25 +88,25 @@ def assign_task(
     return task_id
 
 @router.patch("/submit-task", response_model=TaskEventDomain)
-def submit_task(taskSerivce: TaskServiceDep, taskCommand: SubmitTaskCommand) -> Any:
+def submit_task(taskSerivce: TaskServiceDep, taskSubmitCommand: SubmitTaskCommand) -> Any:
     """
     Submit task.
     """
-    tasks = taskSerivce.handle_command(taskCommand)
+    tasks = taskSerivce.handle_command(taskSubmitCommand)
     return tasks
 
 @router.patch("/approve-task", response_model=TaskEventDomain)
-def submit_task(taskSerivce: TaskServiceDep, current_user: CurrentUser, taskCommand: Command) -> Any:
+def approve_task(taskSerivce: TaskServiceDep, current_user: CurrentUser, taskCommand: Command) -> Any:
     """
-    Submit task.
+    Approve task.
     """
     tasks = taskSerivce.handle_command(ApproveTaskCommand(taskCommand.aggregate_id, current_user.id))
     return tasks
 
 @router.patch("/reject-task", response_model=TaskEventDomain)
-def submit_task(taskSerivce: TaskServiceDep, taskCommand: RejectTaskCommand) -> Any:
+def reject_task(taskSerivce: TaskServiceDep, taskCommand: RejectTaskCommand) -> Any:
     """
-    Submit task.
+    Reject task.
     """
     tasks = taskSerivce.handle_command(taskCommand)
     return tasks

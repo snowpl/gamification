@@ -1,16 +1,15 @@
-import { useState } from "react"
-
 import { Button, Flex, Icon, Select, VStack } from "@chakra-ui/react"
 import { FaPlus } from "react-icons/fa"
-import { AssignTaskCommand, AvailableTaskPublic, AvailableTasksPublic, TasksAssignTaskData, TasksService } from "../../client"
+import { AssignTaskCommand, AvailableTaskPublic, AvailableTasksPublic, SubmitTaskCommand, TasksAssignTaskData, TasksService, TasksSubmitTaskData } from "../../client"
+import { useState } from "react";
+import useAuth from "../../hooks/useAuth";
 import { useMutation } from "@tanstack/react-query"
-import useCustomToast from "../../hooks/useCustomToast"
-import useAuth from "../../hooks/useAuth"
+// import useCustomToast from "../../hooks/useCustomToast"
 
 interface DropdownProps {
   taskList: AvailableTasksPublic | undefined
 }
-const showToast = useCustomToast()
+//const showToast = useCustomToast()
 
 const groupTasksByDepartment = (
   tasks: Array<AvailableTaskPublic>
@@ -29,22 +28,40 @@ const Dropdown = ({ taskList }: DropdownProps) => {
   const { user: currentUser } = useAuth();
   const groupedTasks = taskList ? groupTasksByDepartment(taskList.data) : {};
   const [selectedTask, setSelectedTask] = useState<AvailableTaskPublic | null>(null);
-  
+  let assignedTaskId: string = "";
+
   const assignTask = useMutation({
-    mutationFn: (data: TasksAssignTaskData) =>
-      TasksService.assignTask(data),
+    mutationFn: async (data: TasksAssignTaskData) => {
+      assignedTaskId = await TasksService.assignTask(data)
+    },
       onSuccess: () => {
-        showToast("Success", "Task assigned successfully", "success");
+        console.log("Task assigned successfully");
+        //showToast("Success", "Task assigned successfully", "success");
       },
       onError: (error: any) => {
-        showToast("Error", error.message, "error");
+        console.log("Error assigning task", error);
+        //showToast("Error", error.message, "error");
       },
     }
   );
 
-  const handleAssignTask = () => {
+  const submitTask = useMutation({
+    mutationFn: async (data: TasksSubmitTaskData) =>
+      await TasksService.submitTask(data),
+      onSuccess: () => {
+        console.log("Task completed successfully");
+        //showToast("Success", "Task completed successfully", "success");
+      },
+      onError: (error: any) => {
+        console.log("Error completing task", error);
+        //showToast("Error", error.message, "error");
+      },
+    }
+  );
+
+  const handleAssignTask = async () => {
     if (!selectedTask || !currentUser) {
-      showToast("Issue arised" ,"Please select a task and ensure you are logged in.", "error");
+      //showToast("Issue arised" ,"Please select a task and ensure you are logged in.", "error");
       return;
     }
 
@@ -59,13 +76,23 @@ const Dropdown = ({ taskList }: DropdownProps) => {
       requestBody: reqBody
       }
 
-    assignTask.mutate(taskData);
+    await assignTask.mutateAsync(taskData);
+  };
+
+  const handleAssignAndCompleteTask = async () => {
+    await handleAssignTask();
+    const reqBody: SubmitTaskCommand = {
+      aggregate_id: assignedTaskId
+    }
+    const taskData: TasksSubmitTaskData = {
+      requestBody: reqBody
+    }
+    await submitTask.mutateAsync(taskData);
   };
   
   return (
     <>
       <Flex py={8} gap={4}>
-        {/* Grouped dropdowns */}
         <VStack align="start" spacing={4}>
           {Object.entries(groupedTasks).map(([department, tasks]) => (
             <Flex key={department} flexDir="column" w="100%">
@@ -85,20 +112,22 @@ const Dropdown = ({ taskList }: DropdownProps) => {
             </Flex>
           ))}
         </VStack>
-        {/* TODO: Complete search functionality */}
-        {/* <InputGroup w={{ base: '100%', md: 'auto' }}>
-                    <InputLeftElement pointerEvents='none'>
-                        <Icon as={FaSearch} color='ui.dim' />
-                    </InputLeftElement>
-                    <Input type='text' placeholder='Search' fontSize={{ base: 'sm', md: 'inherit' }} borderRadius='8px' />
-                </InputGroup> */}
+
         <Button
           variant="primary"
           gap={1}
           fontSize={{ base: "sm", md: "inherit" }}
           onClick={handleAssignTask}
         >
-          <Icon as={FaPlus} /> Assign Task
+          <Icon as={FaPlus} /> Assign
+        </Button>
+        <Button
+          variant="primary"
+          gap={1}
+          fontSize={{ base: "sm", md: "inherit" }}
+          onClick={handleAssignAndCompleteTask}
+        >
+          <Icon as={FaPlus} /> Assign And Complete
         </Button>
       </Flex>
     </>

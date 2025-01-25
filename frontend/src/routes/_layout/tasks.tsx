@@ -112,7 +112,7 @@ import {
                       {task.status}
                     </Td>
                     <Td isTruncated maxWidth="150px">
-                      {task.requires_approval}
+                      {task.requires_approval ? "Yes" : "No"}
                     </Td>
                     <Td>
                       {/* <ActionsMenu type={"Task"} value={task} /> */}
@@ -145,7 +145,7 @@ import {
         <Heading size="lg" textAlign={{ base: "center", md: "left" }} pt={12}>
           Task Management
         </Heading>
-  
+
         <Dropdown taskList={avialbleTasks} />
         <TasksTable />
       </Container>

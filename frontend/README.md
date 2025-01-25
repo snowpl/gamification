@@ -51,6 +51,11 @@ Notice that this live server is not running inside Docker, it's for local develo
 
 Check the file `package.json` to see other available options.
 
+### Rebuilding docker image
+First:
+docker-compose build frontend
+docker-compose up frontend
+
 ### Removing the frontend
 
 If you are developing an API-only app and want to remove the frontend, you can do it easily:
@@ -80,7 +85,7 @@ But it would be only to clean them up, leaving them won't really have any effect
 * From the top level project directory, run the script:
 
 ```bash
-./scripts/generate-frontend-client.sh
+./scripts/generate-client.sh
 ```
 
 * Commit the changes.
