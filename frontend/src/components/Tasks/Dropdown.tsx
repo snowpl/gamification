@@ -96,7 +96,7 @@ const Dropdown = ({ taskList }: DropdownProps) => {
         <VStack align="start" spacing={4}>
           {Object.entries(groupedTasks).map(([department, tasks]) => (
             <Flex key={department} flexDir="column" w="100%">
-              <label>{`Department ${department}`}</label>
+              <label>{`${department} Tasks`}</label>
               <Select placeholder="Select Task" fontSize="sm"
               onChange={(e) => {
                 const taskId = e.target.value;
