@@ -19,6 +19,7 @@ import {
   import Dropdown from "../../components/Tasks/Dropdown"
   import { PaginationFooter } from "../../components/Common/PaginationFooter.tsx"
   import useAuth from "../../hooks/useAuth"
+  import { FiCheck, FiCheckCircle, FiXCircle, FiSlash } from 'react-icons/fi';
 
   const tasksSearchSchema = z.object({
     page: z.number().catch(1),
@@ -115,6 +116,18 @@ import {
                       {task.requires_approval ? "Yes" : "No"}
                     </Td>
                     <Td>
+                      {(task.status === "Assigned") && (
+                        <span><FiCheck/>Submit Action</span>
+                      )}
+                      {(task.status === "Waiting Approval") && (
+                        <>
+                        <span><FiCheckCircle />Approve Action</span>
+                        <span><FiXCircle />Reject Action</span>
+                        </>
+                      )}
+                      {(task.status === "Completed") && (
+                        <span><FiSlash/>Cancel Action</span>
+                      )}
                       {/* <ActionsMenu type={"Task"} value={task} /> */}
                     </Td>
                   </Tr>
