@@ -1,20 +1,42 @@
-import uuid
+from uuid import UUID
 from typing import Any
 
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import AvailableTask, AvailableTaskCreate, Company, CompanyCreate, Department, DepartmentCreate, EmployeeTask, Item, ItemCreate, Skill, SkillCreate, User, UserCreate, UserUpdate
+from app.models import AvailableTask, AvailableTaskCreate, Company, CompanyCreate, Department, DepartmentCreate, EmployeeLevel, EmployeeTask, Item, ItemCreate, Skill, SkillCreate, User, UserCreate, UserUpdate
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
-    db_obj = User.model_validate(
-        user_create, update={"hashed_password": get_password_hash(user_create.password)}
+    # Create the User object
+    db_user = User(
+        hashed_password=get_password_hash(user_create.password),
+        email=user_create.email,
+        is_superuser=user_create.is_superuser,
+        company_id=user_create.company_id,
+        department_id=user_create.department_id,
+        full_name=user_create.full_name
     )
-    session.add(db_obj)
+    session.add(db_user)
+    
+    # Create the EmployeeLevel object linked to the User
+    employee_level = EmployeeLevel(
+        employee_id=db_user.id,
+        level=0,
+        xp=0,
+        xp_multiplier=1.0,
+    )
+    session.add(employee_level)
+    session.flush()  # Ensure the `employee_level.id` is generated
+
+    # Link the `employee_level_id` in the User object
+    db_user.employee_level_id = employee_level.id
+    session.add(db_user)  # Update the User object
+
+    # Commit the transaction
     session.commit()
-    session.refresh(db_obj)
-    return db_obj
+    session.refresh(db_user)
+    return db_user
 
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     user_data = user_in.model_dump(exclude_unset=True)
@@ -45,7 +67,7 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
     return db_user
 
 
-def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -> Item:
+def create_item(*, session: Session, item_in: ItemCreate, owner_id: UUID) -> Item:
     db_item = Item.model_validate(item_in, update={"owner_id": owner_id})
     session.add(db_item)
     session.commit()
@@ -79,3 +101,23 @@ def create_available_task(*, session: Session, task_in: AvailableTaskCreate) -> 
     session.commit()
     session.refresh(db_task)
     return db_task
+
+def create_default_level(*, session: Session, employee_id: UUID) -> EmployeeLevel:
+    model_in = EmployeeLevel(
+            employee_id=employee_id,
+            level=0,
+            xp=0,
+            xp_multiplier=1.0,
+    )
+    db_level = EmployeeLevel.model_validate(model_in)
+    session.add(db_level)
+    session.commit()
+    session.refresh(db_level)
+    return db_level
+
+def create_employee_level(*, session: Session, level_in: EmployeeLevel) -> EmployeeLevel:
+    db_level = EmployeeLevel.model_validate(level_in)
+    session.add(db_level)
+    session.commit()
+    session.refresh(db_level)
+    return db_level

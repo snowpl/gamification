@@ -125,6 +125,40 @@ When the tests are run, a file `htmlcov/index.html` is generated, you can open i
 
 As during local development your app directory is mounted as a volume inside the container, you can also run the migrations with `alembic` commands inside the container and the migration code will be in your app directory (instead of being only inside the container). So you can add it to your git repository.
 
+```bash
+alembic revision --autogenerate -m "Migration comment"    
+alembic upgrade head
+```   
+
+Query to drop DB:
+```sql
+DO $$ DECLARE
+    r RECORD;
+BEGIN
+	FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+        EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+    END LOOP;
+END $$;
+```   
+
+Query to remove docker images
+```bash
+#Stop all running containers
+docker stop $(docker ps -aq)
+
+#Remove all containers
+docker rm $(docker ps -aq)
+
+# Remove all images
+docker rmi $(docker images -q)
+
+# Remove all volumes
+docker volume rm $(docker volume ls -q)
+
+# Remove all networks (except the default ones)
+docker network rm $(docker network ls -q)
+```
+
 Make sure you create a "revision" of your models and that you "upgrade" your database with that revision every time you change them. As this is what will update the tables in your database. Otherwise, your application will have errors.
 
 * Start an interactive session in the backend container:

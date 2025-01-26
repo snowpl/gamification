@@ -9,10 +9,12 @@ from app.api.deps import (
     CurrentUser,
     SessionDep,
     get_current_active_superuser,
+    CurrentUserWithLevel
 )
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.models import (
+    EmployeeLevel,
     Item,
     Message,
     UpdatePassword,
@@ -20,6 +22,7 @@ from app.models import (
     UserCreate,
     UserPublic,
     UserRegister,
+    UserWithExperience,
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
@@ -72,6 +75,7 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
             subject=email_data.subject,
             html_content=email_data.html_content,
         )
+    user_level = crud.create_default_level(session=session, employee_id=user.id)
     return user
 
 
@@ -117,8 +121,8 @@ def update_password_me(
     return Message(message="Password updated successfully")
 
 
-@router.get("/me", response_model=UserPublic)
-def read_user_me(current_user: CurrentUser) -> Any:
+@router.get("/me", response_model=UserWithExperience)
+def read_user_me(current_user: CurrentUserWithLevel) -> Any:
     """
     Get current user.
     """

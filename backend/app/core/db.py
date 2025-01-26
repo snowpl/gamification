@@ -2,7 +2,7 @@ from sqlmodel import Session, create_engine, select
 from sqlmodel import SQLModel
 from app import crud
 from app.core.config import settings
-from app.models import Company, CompanyCreate, Department, DepartmentCreate, Skill, SkillCreate, User, UserCreate
+from app.models import Company, CompanyCreate, Department, DepartmentCreate, EmployeeLevel, Skill, SkillCreate, User, UserCreate
 from app.core.data_provider import create_marketing_department, create_sales_department
 import logging
 
@@ -78,7 +78,7 @@ def init_db(session: Session) -> None:
         user_in = UserCreate(
             email=settings.FIRST_SUPERUSER,
             password=settings.FIRST_SUPERUSER_PASSWORD,
-           is_superuser=True,
+            is_superuser=True,
             company_id=company.id,
             department_id=department.id,
             current_xp=0,
