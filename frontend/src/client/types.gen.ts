@@ -154,7 +154,6 @@ export type UserCreate = {
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
-    current_xp?: number;
     password: string;
     company_id: string;
     department_id: string;
@@ -165,7 +164,6 @@ export type UserPublic = {
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
-    current_xp?: number;
     id: string;
 };
 
@@ -185,13 +183,23 @@ export type UserUpdate = {
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
-    current_xp?: number;
     password?: (string | null);
 };
 
 export type UserUpdateMe = {
     full_name?: (string | null);
     email?: (string | null);
+};
+
+export type UserWithExperience = {
+    email: string;
+    is_active?: boolean;
+    is_superuser?: boolean;
+    full_name?: (string | null);
+    id: string;
+    current_xp: number;
+    level: number;
+    missing_xp: number;
 };
 
 export type ValidationError = {
@@ -329,7 +337,7 @@ export type UsersCreateUserData = {
 
 export type UsersCreateUserResponse = (UserPublic);
 
-export type UsersReadUserMeResponse = (UserPublic);
+export type UsersReadUserMeResponse = (UserWithExperience);
 
 export type UsersDeleteUserMeResponse = (Message);
 

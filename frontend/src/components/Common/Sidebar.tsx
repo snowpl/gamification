@@ -16,7 +16,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { FiLogOut, FiMenu } from "react-icons/fi"
 
 import Logo from "/assets/images/fastapi-logo.svg"
-import type { UserPublic } from "../../client"
+import type { UserWithExperience } from "../../client"
 import useAuth from "../../hooks/useAuth"
 import SidebarItems from "./SidebarItems"
 
@@ -25,7 +25,7 @@ const Sidebar = () => {
   const bgColor = useColorModeValue("ui.light", "ui.dark")
   const textColor = useColorModeValue("ui.dark", "ui.light")
   const secBgColor = useColorModeValue("ui.secondary", "ui.darkSlate")
-  const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
+  const currentUser = queryClient.getQueryData<UserWithExperience>(["currentUser"])
   const { isOpen, onOpen, onClose } = useDisclosure()
   const { logout } = useAuth()
 
@@ -105,6 +105,20 @@ const Sidebar = () => {
               maxW="180px"
             >
               Logged in as: {currentUser.email}
+            </Text>
+          )}
+
+          {currentUser?.email && (
+            <Text
+              color={textColor}
+              noOfLines={2}
+              fontSize="sm"
+              p={2}
+              maxW="180px"
+            >
+              Level: {currentUser.level}
+              Experience: {currentUser.current_xp}
+              Experience till next level: {currentUser.missing_xp}
             </Text>
           )}
         </Flex>

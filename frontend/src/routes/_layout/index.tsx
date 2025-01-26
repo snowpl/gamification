@@ -18,6 +18,7 @@ function Dashboard() {
             Hi, {currentUser?.full_name || currentUser?.email} 👋🏼
           </Text>
           <Text>Welcome back, nice to see you again!</Text>
+          <Text>Your current level is {currentUser?.level} and you miss experience {currentUser?.missing_xp} to next level.</Text>
         </Box>
       </Container>
     </>

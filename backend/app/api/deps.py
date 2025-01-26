@@ -92,7 +92,6 @@ def get_current_user_with_level(session: SessionDep, token: TokenDep) -> UserWit
 
     # Calculate XP missing for the next level
     xp_missing = level_xp_requirements[user_with_levels.level+1] - user_with_levels.xp
-    print(level_xp_requirements[user_with_levels.level+1])
 
     return UserWithExperience(
         email=user_with_levels.User.email,

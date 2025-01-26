@@ -4,6 +4,13 @@ The frontend is built with [Vite](https://vitejs.dev/), [React](https://reactjs.
 
 ## Frontend development
 
+To restart docker container:
+
+```bash
+docker-compose build frontend
+docker compose up frontend
+```
+
 Before you begin, ensure that you have either the Node Version Manager (nvm) or Fast Node Manager (fnm) installed on your system.
 
 * To install fnm follow the [official fnm guide](https://github.com/Schniz/fnm#installation). If you prefer nvm, you can install it using the [official nvm guide](https://github.com/nvm-sh/nvm#installing-and-updating).
