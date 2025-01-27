@@ -1,8 +1,8 @@
-"""Initial Migration
+"""Initial migration
 
-Revision ID: b854c6aa159a
+Revision ID: 5b3519886545
 Revises: 
-Create Date: 2025-01-27 15:26:30.600434
+Create Date: 2025-01-27 20:46:25.889696
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel.sql.sqltypes
 
 
 # revision identifiers, used by Alembic.
-revision = 'b854c6aa159a'
+revision = '5b3519886545'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -27,33 +27,6 @@ def upgrade():
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('department',
-    sa.Column('id', sa.Uuid(), nullable=False),
-    sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('current_xp', sa.Integer(), nullable=False),
-    sa.Column('level', sa.Integer(), nullable=False),
-    sa.Column('company_id', sa.Uuid(), nullable=False),
-    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
-    )
-
-    op.create_table('user',
-    sa.Column('email', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('is_superuser', sa.Boolean(), nullable=False),
-    sa.Column('full_name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
-    sa.Column('id', sa.Uuid(), nullable=False),
-    sa.Column('hashed_password', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('company_id', sa.Uuid(), nullable=False),
-    sa.Column('department_id', sa.Uuid(), nullable=False),
-    sa.Column('employee_level_id', sa.Uuid(), nullable=True),
-    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['department_id'], ['department.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=True)
-
-
     op.create_table('employee_levels',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('employee_id', sa.Uuid(), nullable=True),
@@ -64,20 +37,18 @@ def upgrade():
     sa.Column('xp_multiplier', sa.Float(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['employee_id'], ['user.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('employee_id')
+    sa.PrimaryKeyConstraint('id')
     )
-
-    op.create_foreign_key(
-        "fk_employee_levels_employee_id_user",
-        source_table="employee_levels",
-        referent_table="user",
-        local_cols=["employee_id"],
-        remote_cols=["id"],
-        ondelete="CASCADE",
+    op.create_table('department',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
+    sa.Column('current_xp', sa.Integer(), nullable=False),
+    sa.Column('level', sa.Integer(), nullable=False),
+    sa.Column('company_id', sa.Uuid(), nullable=False),
+    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
     )
-
+    
     op.create_table('taskevent',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('aggregate_id', sa.Uuid(), nullable=False),
@@ -90,6 +61,37 @@ def upgrade():
     sa.Column('approved_by_id', sa.Uuid(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('user',
+    sa.Column('email', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('is_superuser', sa.Boolean(), nullable=False),
+    sa.Column('full_name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('hashed_password', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('company_id', sa.Uuid(), nullable=False),
+    sa.Column('department_id', sa.Uuid(), nullable=False),
+    sa.Column('employee_level_id', sa.Uuid(), nullable=True),
+    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['department_id'], ['department.id'], ),
+    sa.ForeignKeyConstraint(['employee_level_id'], ['employee_levels.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_foreign_key(
+        'fk_employee_levels_employee_id_user',
+        'employee_levels',  # Local table
+        'user',             # Referenced table
+        ['employee_id'],     # Local columns
+        ['id'],              # Referenced columns
+        ondelete='CASCADE'
+    )
+
+    op.create_unique_constraint(
+        'uq_employee_levels_employee_id',
+        'employee_levels',
+        ['employee_id']
+    )
+    op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=True)
+    
     op.create_table('employeetask',
     sa.Column('task_id', sa.Uuid(), nullable=True),
     sa.Column('status', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
@@ -116,16 +118,12 @@ def upgrade():
     sa.ForeignKeyConstraint(['owner_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('skill',
+    op.create_table('globalskill',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
     sa.Column('description', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
-    sa.Column('xp', sa.Integer(), nullable=False),
-    sa.Column('level', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Uuid(), nullable=True),
     sa.Column('department_id', sa.Uuid(), nullable=False),
     sa.ForeignKeyConstraint(['department_id'], ['department.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('availabletask',
@@ -144,7 +142,17 @@ def upgrade():
     sa.Column('company_id', sa.Uuid(), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['department_id'], ['department.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['skill_id'], ['skill.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['skill_id'], ['globalskill.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('employeeskill',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('xp', sa.Integer(), nullable=False),
+    sa.Column('level', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Uuid(), nullable=False),
+    sa.Column('skill_id', sa.Uuid(), nullable=False),
+    sa.ForeignKeyConstraint(['skill_id'], ['globalskill.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
@@ -152,8 +160,9 @@ def upgrade():
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('employeeskill')
     op.drop_table('availabletask')
-    op.drop_table('skill')
+    op.drop_table('globalskill')
     op.drop_table('item')
     op.drop_table('employeetask')
     op.drop_table('department')
