@@ -23,6 +23,9 @@ from app.api.users.skills_models import EmployeeSkillCreate, GlobalSkillCreate
 class LevelsRepository:
     def save(self, level: EmployeeLevel) -> None:
         raise NotImplementedError
+    
+    def saveSkill(self, skill: EmployeeSkill) -> None:
+        raise NotImplementedError
 
     def get_task(self, task_id: UUID) -> AvailableTask:
         raise NotImplementedError
@@ -58,6 +61,16 @@ class PostgresLevelsRepository(LevelsRepository):
         else:
             # Add a new task
             self.db_session.add(level)
+        self.db_session.commit()
+
+    def saveSkill(self, employeeSkill: EmployeeSkill) -> None:
+        existing_level = self.get_employee_skill(employeeSkill.skill_id, employeeSkill.user_id)
+        if existing_level:
+            # Update the task
+            self.db_session.merge(employeeSkill)
+        else:
+            # Add a new task
+            self.db_session.add(employeeSkill)
         self.db_session.commit()
 
     def get_task(self, task_id: UUID) -> AvailableTask:

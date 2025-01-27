@@ -26,6 +26,8 @@ class LevelsService:
         if not employee_skill:
             skill = self.repository.get_global_skill(task.skill_id)
             # Create the skill for the user first time completing task in a domain
+            print('got global skill')
+            print(skill)
             skill_create = EmployeeSkillCreate(
                 skill_id = skill.id,
                 user_id=employee_id,
@@ -45,7 +47,7 @@ class LevelsService:
 
         # Save changes to the database
         self.repository.save(employee_level)
-        self.repository.save(employee_skill)
+        self.repository.saveSkill(employee_skill)
         print('level service finished')
 #     def __init__(self, repository: TaskRepository):
 #         self.repository = repository
