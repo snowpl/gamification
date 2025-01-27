@@ -1,43 +1,11 @@
 from datetime import datetime
 from typing import Optional
 from uuid import UUID, uuid4
-from pydantic import EmailStr
+from app.api.users.users_models import UserBase
+from app.api.users.skills_models import SkillBase
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.orm import RelationshipProperty
-from sqlalchemy import Column, Enum
-
-# Shared properties
-class UserBase(SQLModel):
-    email: EmailStr = Field(unique=True, index=True, max_length=255)
-    is_active: bool = True
-    is_superuser: bool = False
-    full_name: str | None = Field(default=None, max_length=255)
-
-# Properties to receive via API on creation
-class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=40)
-    company_id: UUID
-    department_id: UUID
-
-class UserRegister(SQLModel):
-    email: EmailStr = Field(max_length=255)
-    password: str = Field(min_length=8, max_length=40)
-    full_name: str | None = Field(default=None, max_length=255)
-
-# Properties to receive via API on update, all are optional
-class UserUpdate(UserBase):
-    email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore
-    password: str | None = Field(default=None, min_length=8, max_length=40)
-
-
-class UserUpdateMe(SQLModel):
-    full_name: str | None = Field(default=None, max_length=255)
-    email: EmailStr | None = Field(default=None, max_length=255)
-
-
-class UpdatePassword(SQLModel):
-    current_password: str = Field(min_length=8, max_length=40)
-    new_password: str = Field(min_length=8, max_length=40)
+from sqlalchemy import Enum
 
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
@@ -73,20 +41,6 @@ class User(UserBase, table=True):
             foreign_keys='[EmployeeLevel.employee_id]'
             )
     )
-
-# Properties to return via API, id is always required
-class UserPublic(UserBase):
-    id: UUID
-
-class UserWithExperience(UserPublic):
-    current_xp: int
-    level: int
-    missing_xp: int
-
-class UsersPublic(SQLModel):
-    data: list[UserPublic]
-    count: int
-
 
 # Shared properties
 class ItemBase(SQLModel):
@@ -164,13 +118,6 @@ class CompanyRead(CompanyBase):
 class CompanyCreate(CompanyBase):
     pass
 
-#Shared properties
-class SkillBase(SQLModel):
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
-    name: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=500)
-    current_xp: int = 0
-
 #Database model
 class Skill(SkillBase, table=True):
     user_id: Optional[UUID] = Field(
@@ -182,11 +129,6 @@ class Skill(SkillBase, table=True):
     )
     department: "Department" = Relationship(back_populates="department_skills")
     employee_tasks: list["AvailableTask"] = Relationship(back_populates="skill", cascade_delete=True)
-
-#Skill properties to recieve on creation
-class SkillCreate(SkillBase):
-    department_id: UUID
-    user_id: Optional[UUID] = None  # Make user_id optional
 
 # #Shared properties
 # class LevelBase(SQLModel):

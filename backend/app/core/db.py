@@ -1,8 +1,9 @@
+from app.api.users.users_models import UserCreate
 from sqlmodel import Session, create_engine, select
 from sqlmodel import SQLModel
 from app import crud
 from app.core.config import settings
-from app.models import Company, CompanyCreate, Department, DepartmentCreate, EmployeeLevel, Skill, SkillCreate, User, UserCreate
+from app.models import Company, CompanyCreate, Department, DepartmentCreate, User
 from app.core.data_provider import create_marketing_department, create_sales_department
 import logging
 
@@ -81,7 +82,6 @@ def init_db(session: Session) -> None:
             is_superuser=True,
             company_id=company.id,
             department_id=department.id,
-            current_xp=0,
             full_name="Admin Test"
         )
         user = crud.create_user(session=session, user_create=user_in)

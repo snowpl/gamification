@@ -7,7 +7,7 @@ from app.tasks.tasks_service import ApproveTaskCommand, AssignTaskCommand, Cance
 from app.tasks.task_models import TaskCompletedEvent
 from sqlmodel import func, select
 from app.api.deps import CurrentUser, SessionDep, TaskServiceDep, LevelsServiceDep
-from app.models import AvailableTask, AvailableTaskPublic, AvailableTasksPublic, Department, EmployeeTask, TaskEvent, TaskStatus
+from app.models import AvailableTask, AvailableTaskPublic, AvailableTasksPublic, Department, EmployeeTask, TaskEvent
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 

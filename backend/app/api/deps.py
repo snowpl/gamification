@@ -7,6 +7,8 @@ from app.tasks.tasks_service import TaskService
 from app.tasks.task_repository import PostgresTaskRepository
 from app.levels.levels_repository import PostgresLevelsRepository
 from app.levels.levels_service import LevelsService
+from app.api.users.users_models import UserWithSkills, UserWithExperience
+from app.api.users.skills_models import SkillPublic
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -17,8 +19,8 @@ from sqlmodel import Session
 from app.core import security
 from app.core.config import settings
 from app.core.db import engine
-from app.models import EmployeeLevel, TokenPayload, User, UserWithExperience
-from app.levels.levels_requirements import level_xp_requirements
+from app.models import EmployeeLevel, Skill, TokenPayload, User
+from app.levels.levels_requirements import level_xp_requirements, skill_xp_requirements
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -111,5 +113,66 @@ def get_current_user_with_level(session: SessionDep, token: TokenDep) -> UserWit
         missing_xp = xp_missing
     )
 
-
 CurrentUserWithLevel = Annotated[dict, Depends(get_current_user_with_level)]
+
+def get_current_user_with_skills_and_experience(session: SessionDep, token: TokenDep) -> UserWithSkills:
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
+        token_data = TokenPayload(**payload)
+    except (InvalidTokenError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
+        )
+    
+    user_statement = (select(
+                User, 
+                EmployeeLevel.level.label("level"), 
+                EmployeeLevel.xp.label("xp"),
+                Skill.name.label("skill_name"),
+                Skill.level.label("skill_level"),
+                Skill.xp.label("skill_xp"),
+            )
+        .join(EmployeeLevel, User.id == EmployeeLevel.employee_id)
+        .join(Skill, User.id == Skill.user_id)
+        .filter(User.id == token_data.sub)
+    )
+
+    results = session.exec(user_statement).all()
+
+    if not results:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_data = UserWithSkills(
+        id=results[0].User.id,
+        email=results[0].User.email,
+        current_xp=results[0].xp,
+        level=results[0].level,
+        missing_xp=level_xp_requirements[results[0].level+1] - results[0].xp,
+        skills=[],
+        isActive= results[0].User.is_active,
+        is_superuser=results[0].User.is_superuser,
+        full_name=results[0].User.full_name,
+    )
+    print(user_data)
+    for row in results:
+
+        print('assigning first skill')
+        skill_missing_xp = skill_xp_requirements[row.skill_level+1] - row.skill_xp
+        print(skill_missing_xp)
+        print(row.skill_name)
+        print(row.skill_xp)
+        print(row.skill_level)
+        user_data.skills.append(SkillPublic(
+            name = row.skill_name,
+            xp = row.skill_xp,
+            level = row.skill_level,
+            missing_xp = skill_missing_xp
+            ))
+        print('skill asigned')
+
+    return user_data
+
+CurrentUserWithSkills = Annotated[dict, Depends(get_current_user_with_skills_and_experience)]

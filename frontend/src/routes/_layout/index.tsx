@@ -2,6 +2,7 @@ import { Box, Container, Text } from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
 
 import useAuth from "../../hooks/useAuth"
+import RadarChart from "../../components/Common/RadarChart"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -19,6 +20,10 @@ function Dashboard() {
           </Text>
           <Text>Welcome back, nice to see you again!</Text>
           <Text>Your current level is {currentUser?.level} and you miss experience {currentUser?.missing_xp} to next level.</Text>
+          <Text fontSize="xl">
+            Your skills:
+          </Text>
+          <RadarChart/>
         </Box>
       </Container>
     </>

@@ -1,7 +1,8 @@
 import uuid
 from requests import Session
 from app import crud
-from app.models import AvailableTaskCreate, DepartmentCreate, EmployeeTask, SkillCreate
+from app.models import AvailableTaskCreate, DepartmentCreate, EmployeeTask
+from app.api.users.skills_models import SkillCreate
 
 def create_sales_department(session:Session, company_id:uuid) -> EmployeeTask:
     sales_department = DepartmentCreate(
@@ -13,7 +14,8 @@ def create_sales_department(session:Session, company_id:uuid) -> EmployeeTask:
     content_skills = SkillCreate(
         name="Sales Skill",
         department_id=department.id,
-        current_xp=0,
+        xp=0,
+        level=0,
         description="Everything related to sales skill #1"
     )
     cs = crud.create_skill(session=session, skill_in=content_skills)
@@ -44,7 +46,8 @@ def create_marketing_department(session: Session, company_id: uuid) -> EmployeeT
     content_skills = SkillCreate(
         name="Content Creation",
         department_id=marketing_department.id,
-        current_xp=0,
+        xp=0,
+        level=0,
         description="Everything related to content creation"
     )
     cs = crud.create_skill(session=session, skill_in=content_skills)
@@ -52,7 +55,8 @@ def create_marketing_department(session: Session, company_id: uuid) -> EmployeeT
     research = SkillCreate(
         name="Research Creation",
         department_id=marketing_department.id,
-        current_xp=0,
+        xp=0,
+        level=0,
         description="Everything related to reaserch in marketing"
     )
     rs = crud.create_skill(session=session, skill_in=research)
@@ -60,7 +64,8 @@ def create_marketing_department(session: Session, company_id: uuid) -> EmployeeT
     campaigns = SkillCreate(
         name="Campaigns",
         department_id=marketing_department.id,
-        current_xp=0,
+        xp=0,
+        level=0,
         description="Everything related to marketing campaigns"
     )
     camcs = crud.create_skill(session=session, skill_in=campaigns)
@@ -68,7 +73,8 @@ def create_marketing_department(session: Session, company_id: uuid) -> EmployeeT
     partner = SkillCreate(
         name="Partnerships",
         department_id=marketing_department.id,
-        current_xp=0,
+        xp=0,
+        level=0,
         description="Everything related to partnerships"
     )
     pars = crud.create_skill(session=session, skill_in=partner)
@@ -76,7 +82,8 @@ def create_marketing_department(session: Session, company_id: uuid) -> EmployeeT
     sm = SkillCreate(
         name="Social Media",
         department_id=marketing_department.id,
-        current_xp=0,
+        xp=0,
+        level=0,
         description="Everything related to social media"
     )
     sms = crud.create_skill(session=session, skill_in=sm)
@@ -84,7 +91,8 @@ def create_marketing_department(session: Session, company_id: uuid) -> EmployeeT
     website = SkillCreate(
         name="Website",
         department_id=marketing_department.id,
-        current_xp=0,
+        xp=0,
+        level=0,
         description="Everything related to website"
     )
     ws = crud.create_skill(session=session, skill_in=website)
@@ -92,7 +100,8 @@ def create_marketing_department(session: Session, company_id: uuid) -> EmployeeT
     analytics = SkillCreate(
         name="Analytics",
         department_id=marketing_department.id,
-        current_xp=0,
+        xp=0,
+        level=0,
         description="Everything related to analytics"
     )
     anas = crud.create_skill(session=session, skill_in=analytics)
@@ -100,7 +109,8 @@ def create_marketing_department(session: Session, company_id: uuid) -> EmployeeT
     accountbased = SkillCreate(
         name="Account Based Marketing",
         department_id=marketing_department.id,
-        current_xp=0,
+        xp=0,
+        level=0,
         description="Everything related to account based marketing"
     )
     accs = crud.create_skill(session=session, skill_in=accountbased)

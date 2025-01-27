@@ -2,6 +2,7 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from app.api.users.users_models import UpdatePassword, UserCreate, UserPublic, UserRegister, UserUpdate, UserUpdateMe, UserWithExperience, UserWithSkills, UsersPublic
 from sqlmodel import col, delete, func, select
 
 from app import crud
@@ -9,7 +10,8 @@ from app.api.deps import (
     CurrentUser,
     SessionDep,
     get_current_active_superuser,
-    CurrentUserWithLevel
+    CurrentUserWithLevel,
+    CurrentUserWithSkills
 )
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
@@ -17,15 +19,8 @@ from app.models import (
     EmployeeLevel,
     Item,
     Message,
-    UpdatePassword,
-    User,
-    UserCreate,
-    UserPublic,
-    UserRegister,
-    UserWithExperience,
-    UsersPublic,
-    UserUpdate,
-    UserUpdateMe,
+    Skill,
+    User
 )
 from app.utils import generate_new_account_email, send_email
 
@@ -128,6 +123,12 @@ def read_user_me(current_user: CurrentUserWithLevel) -> Any:
     """
     return current_user
 
+@router.get("/me-with-skills", response_model=UserWithSkills)
+def read_user_me(current_user_with_skills: CurrentUserWithSkills) -> Any:
+    """
+    Get current user with skills.
+    """
+    return current_user_with_skills
 
 @router.delete("/me", response_model=Message)
 def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:

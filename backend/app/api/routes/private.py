@@ -6,9 +6,9 @@ from pydantic import BaseModel
 from app.api.deps import SessionDep
 from app.core.security import get_password_hash
 from app.models import (
-    User,
-    UserPublic,
+    User
 )
+from app.api.users.users_models import UserPublic
 
 router = APIRouter(tags=["private"], prefix="/private")
 

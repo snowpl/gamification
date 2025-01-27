@@ -1,10 +1,12 @@
 from uuid import UUID
 from typing import Any
 
+from app.api.users.skills_models import SkillCreate
+from app.api.users.users_models import UserCreate, UserUpdate
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import AvailableTask, AvailableTaskCreate, Company, CompanyCreate, Department, DepartmentCreate, EmployeeLevel, EmployeeTask, Item, ItemCreate, Skill, SkillCreate, User, UserCreate, UserUpdate
+from app.models import AvailableTask, AvailableTaskCreate, Company, CompanyCreate, Department, DepartmentCreate, EmployeeLevel, EmployeeTask, Item, ItemCreate, Skill, User
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:

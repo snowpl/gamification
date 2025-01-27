@@ -4,8 +4,8 @@ from typing import List, Optional
 from uuid import UUID
 from requests import Session
 from sqlalchemy import select, insert
-
-from app.models import AvailableTask, EmployeeLevel
+from app.models import AvailableTask, EmployeeLevel, Skill
+from app.api.users.skills_models import SkillCreate
 
 # #region Repository Interface
 # @singledispatch
@@ -29,6 +29,16 @@ class LevelsRepository:
 
     def get_level(self, employee_id: UUID) -> EmployeeLevel:
         raise NotImplementedError
+    
+    def get_skill(self, skill_id: UUID) -> Skill:
+        raise NotImplementedError
+    
+    def get_employee_skill(self, skill_id: UUID, employee_id: UUID) -> Optional[Skill]:
+        raise NotImplementedError
+
+    def create_skill(self, skill_in: SkillCreate) -> Skill:
+        raise NotImplementedError
+    
     # def get_by_id(self, task_id: UUID) -> Optional[EmployeeTask]:
     #     raise NotImplementedError
 
@@ -59,6 +69,22 @@ class PostgresLevelsRepository(LevelsRepository):
         query = select(EmployeeLevel).where(EmployeeLevel.employee_id==employee_id)
         result = self.db_session.execute(query).scalars().one()
         return result
+    
+    def get_skill(self, skill_id: UUID) -> Skill:
+        query = select(Skill).where(Skill.id==skill_id)
+        result = self.db_session.execute(query).scalars().one()
+        return result
+
+    def get_employee_skill(self, skill_id: UUID, user_id: UUID) -> Optional[Skill]:
+        query = select(Skill).where((Skill.id==skill_id) & (Skill.user_id == user_id))
+        result = self.db_session.execute(query).scalars().one_or_none()
+        return result
+    
+    def create_skill(self, skill_in: SkillCreate) -> Skill:
+        db_skill = Skill.model_validate(skill_in)
+        self.db_session.add(db_skill)
+        self.db_session.commit()
+        return db_skill
     
     # def save_event(self, event: TaskEvent) -> None:
     #     # Convert the event to a dict representation if needed
