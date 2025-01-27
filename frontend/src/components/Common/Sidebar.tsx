@@ -109,7 +109,7 @@ const Sidebar = () => {
             </Text>
           )}
 
-          {currentUser?.current_xp && (
+          {currentUser && (
             <XPProgressBar value={currentUser.current_xp} 
               currentMissingValue={currentUser.missing_xp} 
               currentLevel={currentUser.level} />

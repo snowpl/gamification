@@ -25,10 +25,10 @@ def create_sales_department(session:Session, company_id:uuid) -> EmployeeTask:
         department_id=department.id,
         skill_id=cs.id,
         approved=False,
-        department_xp=20,
-        skill_xp=10,
-        company_xp=2,
-        person_xp= 1,
+        department_xp=200,
+        skill_xp=100,
+        company_xp=200,
+        person_xp= 100,
         company_id=department.company_id)
     
     taks = crud.create_available_task(session=session, task_in=task1)
