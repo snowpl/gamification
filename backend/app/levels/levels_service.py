@@ -27,7 +27,7 @@ class LevelsService:
             skill = self.repository.get_global_skill(task.skill_id)
             # Create the skill for the user first time completing task in a domain
             skill_create = EmployeeSkillCreate(
-                skill_id = skill.skill_id,
+                skill_id = skill.id,
                 user_id=employee_id,
                 xp=0,
                 level=0

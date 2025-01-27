@@ -76,7 +76,7 @@ class PostgresLevelsRepository(LevelsRepository):
         return result
 
     def get_employee_skill(self, skill_id: UUID, user_id: UUID) -> Optional[EmployeeSkill]:
-        query = select(EmployeeSkill).where((EmployeeSkill.id == skill_id) & (EmployeeSkill.user_id == user_id))
+        query = select(EmployeeSkill).where((EmployeeSkill.skill_id == skill_id) & (EmployeeSkill.user_id == user_id))
         result = self.db_session.execute(query).scalars().one_or_none()
         return result
     

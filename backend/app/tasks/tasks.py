@@ -50,7 +50,8 @@ def read_tasks(
             department_xp= row.department_xp,
             skill_xp = row.skill_xp,
             company_xp = row.company_xp,
-            person_xp = row.person_xp
+            person_xp = row.person_xp,
+            skill_id = row.skill_id
         )
         for row, department_name, department_id in result
     ]

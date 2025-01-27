@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 5b3519886545
+Revision ID: 728d18f52604
 Revises: 
-Create Date: 2025-01-27 20:46:25.889696
+Create Date: 2025-01-27 21:14:00.575332
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlmodel.sql.sqltypes
 
 
 # revision identifiers, used by Alembic.
-revision = '5b3519886545'
+revision = '728d18f52604'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -39,6 +39,7 @@ def upgrade():
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+
     op.create_table('department',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
@@ -48,7 +49,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
-    
     op.create_table('taskevent',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('aggregate_id', sa.Uuid(), nullable=False),
@@ -76,6 +76,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['employee_level_id'], ['employee_levels.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
+
     op.create_foreign_key(
         'fk_employee_levels_employee_id_user',
         'employee_levels',  # Local table
@@ -90,8 +91,8 @@ def upgrade():
         'employee_levels',
         ['employee_id']
     )
+
     op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=True)
-    
     op.create_table('employeetask',
     sa.Column('task_id', sa.Uuid(), nullable=True),
     sa.Column('status', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
@@ -146,14 +147,13 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('employeeskill',
-    sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('xp', sa.Integer(), nullable=False),
     sa.Column('level', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Uuid(), nullable=False),
     sa.Column('skill_id', sa.Uuid(), nullable=False),
     sa.ForeignKeyConstraint(['skill_id'], ['globalskill.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('user_id', 'skill_id')
     )
     # ### end Alembic commands ###
 

@@ -5,7 +5,7 @@ from app.api.users.users_models import UserBase
 from app.api.users.skills_models import SkillBase
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.orm import RelationshipProperty
-from sqlalchemy import Enum
+from sqlalchemy import Enum, PrimaryKeyConstraint
 
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
@@ -132,13 +132,15 @@ class GlobalSkill(SkillBase, table=True):
 
 #Database model
 class EmployeeSkill(SQLModel, table=True):
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    __tablename__: "employeeskills"
+    __table_args__ = (PrimaryKeyConstraint("user_id", "skill_id"),)
+
     xp: int = 0
     level: int = 0
-    user_id: UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
-    skill_id: UUID = Field(foreign_key="globalskill.id", nullable=False, ondelete="CASCADE")
+    user_id: UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE", primary_key=True)
+    skill_id: UUID = Field(foreign_key="globalskill.id", nullable=False, ondelete="CASCADE", primary_key=True)
     
-    skill: "GlobalSkill" = Relationship(back_populates="users")
+    skills: "GlobalSkill" = Relationship(back_populates="users")
     user: "User" = Relationship(back_populates="user_skills")
 
     # department_id: UUID = Field(

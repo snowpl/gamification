@@ -137,7 +137,7 @@ def get_current_user_with_skills_and_experience(session: SessionDep, token: Toke
             )
         .join(EmployeeLevel, User.id == EmployeeLevel.employee_id)
         .join(EmployeeSkill, User.id == EmployeeSkill.user_id, isouter=True)
-        .join(GlobalSkill, User.id == EmployeeSkill.skill_id, isouter=True)
+        .join(GlobalSkill, GlobalSkill.id == EmployeeSkill.skill_id, isouter=True)
         .filter(User.id == token_data.sub)
     )
 
@@ -158,6 +158,9 @@ def get_current_user_with_skills_and_experience(session: SessionDep, token: Toke
         full_name=results[0].User.full_name,
     )
     for row in results:
+        print(row.skill_name)
+        print(row.skill_level)
+
         if row.skill_name:
             skill_missing_xp = skill_xp_requirements[row.skill_level+1] - row.skill_xp
             
