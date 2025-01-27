@@ -30,6 +30,7 @@ const Dropdown = ({ taskList }: DropdownProps) => {
   const queryClient = useQueryClient()
   const { user: currentUser } = useAuth();
   const groupedTasks = taskList ? groupTasksByDepartment(taskList.data) : {};
+  const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<AvailableTaskPublic | null>(null);
   let assignedTaskId: string = "";
 
@@ -97,7 +98,51 @@ const Dropdown = ({ taskList }: DropdownProps) => {
   
   return (
     <>
-      <Flex py={8} gap={4}>
+    <Flex py={8} gap={4} flexDir="column">
+        <VStack align="start" spacing={4}>
+          {/* Department Dropdown */}
+          <Flex flexDir="column" w="25%">
+            <label>Select Departments</label>
+            <Select
+              placeholder="Select Department"
+              fontSize="sm"
+              onChange={(e) => {
+                const department = e.target.value;
+                setSelectedDepartment(department);
+                setSelectedTask(null); // Reset the selected task when department changes
+              }}
+            >
+              {Object.keys(groupedTasks).map((department) => (
+                <option key={department} value={department}>
+                  {department}
+                </option>
+              ))}
+            </Select>
+          </Flex>
+
+          {/* Task Dropdown */}
+          {selectedDepartment && (
+            <Flex flexDir="column" w="25%">
+              <label>Select Task</label>
+              <Select
+                placeholder="Select Task"
+                fontSize="sm"
+                onChange={(e) => {
+                  const taskId = e.target.value;
+                  const task = groupedTasks[selectedDepartment]?.find((t) => t.id === taskId);
+                  setSelectedTask(task || null);
+                }}
+              >
+                {groupedTasks[selectedDepartment]?.map((task) => (
+                  <option key={task.id} value={task.id}>
+                    {task.title}
+                  </option>
+                ))}
+              </Select>
+            </Flex>
+          )}
+        </VStack>
+      {/* <Flex py={8} gap={4}>
         <VStack align="start" spacing={4}>
           {Object.entries(groupedTasks).map(([department, tasks]) => (
             <Flex key={department} flexDir="column" w="100%">
@@ -116,7 +161,7 @@ const Dropdown = ({ taskList }: DropdownProps) => {
               </Select>
             </Flex>
           ))}
-        </VStack>
+        </VStack> */}
 
         <Button
           variant="primary"
