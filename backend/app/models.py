@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID, uuid4
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, SQLModel, DateTime
+from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.orm import RelationshipProperty
 from sqlalchemy import Column, Enum
 
@@ -347,6 +347,7 @@ class EmployeeLevel(SQLModel, table=True):
             foreign_keys='[EmployeeLevel.employee_id]')
     )
     level: int = Field(nullable=False, default=0, description="Current level of the employee.")
+    #This would be for tracking history of leveling up
     level_start_date: datetime = Field(default_factory=datetime.now, nullable=False)
     level_end_date: Optional[datetime] = Field(default=None)
     xp: int = Field(default=0, nullable=False, description="Current XP points of the employee.")

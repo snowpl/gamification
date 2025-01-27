@@ -3,7 +3,10 @@ from typing import Annotated
 
 from sqlalchemy import select
 
-from app.api.routes.tasks_service import PostgresTaskRepository, TaskService
+from app.tasks.tasks_service import TaskService
+from app.tasks.task_repository import PostgresTaskRepository
+from app.levels.levels_repository import PostgresLevelsRepository
+from app.levels.levels_service import LevelsService
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -32,6 +35,10 @@ TokenDep = Annotated[str, Depends(reusable_oauth2)]
 def get_task_service(db: SessionDep) -> TaskService:
     return TaskService(PostgresTaskRepository(db))
 TaskServiceDep = Annotated[TaskService, Depends(get_task_service)]
+
+def get_level_service(db: SessionDep) -> LevelsService:
+    return LevelsService(PostgresLevelsRepository(db))
+LevelsServiceDep = Annotated[LevelsService, Depends(get_level_service)]
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:
     try:

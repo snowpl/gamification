@@ -19,6 +19,7 @@ import Logo from "/assets/images/fastapi-logo.svg"
 import type { UserWithExperience } from "../../client"
 import useAuth from "../../hooks/useAuth"
 import SidebarItems from "./SidebarItems"
+import XPProgressBar from "./XPProgressBar"
 
 const Sidebar = () => {
   const queryClient = useQueryClient()
@@ -108,18 +109,10 @@ const Sidebar = () => {
             </Text>
           )}
 
-          {currentUser?.email && (
-            <Text
-              color={textColor}
-              noOfLines={2}
-              fontSize="sm"
-              p={2}
-              maxW="180px"
-            >
-              Level: {currentUser.level}
-              Experience: {currentUser.current_xp}
-              Experience till next level: {currentUser.missing_xp}
-            </Text>
+          {currentUser?.current_xp && (
+            <XPProgressBar value={currentUser.current_xp} 
+              currentMissingValue={currentUser.missing_xp} 
+              currentLevel={currentUser.level} />
           )}
         </Flex>
       </Box>

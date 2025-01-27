@@ -1,16 +1,12 @@
-from datetime import datetime
-from enum import Enum
-from typing import Dict, List, Any, Optional
-from uuid import UUID, uuid4
-from dataclasses import dataclass
-from functools import singledispatch
+from typing import List, Any
+from uuid import UUID
 from fastapi import APIRouter
-from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, insert, func
-from typing import Optional, List
-from app.api.routes.tasks_service import ApproveTaskCommand, AssignTaskCommand, CancelTaskCommand, Command, RejectTaskCommand, SubmitTaskCommand, TaskEventDomain
+from typing import List
+from app.tasks.tasks_service import ApproveTaskCommand, AssignTaskCommand, CancelTaskCommand, Command, RejectTaskCommand, SubmitTaskCommand, TaskEventDomain
+from app.tasks.task_models import TaskCompletedEvent
 from sqlmodel import func, select
-from app.api.deps import CurrentUser, SessionDep, TaskServiceDep
+from app.api.deps import CurrentUser, SessionDep, TaskServiceDep, LevelsServiceDep
 from app.models import AvailableTask, AvailableTaskPublic, AvailableTasksPublic, Department, EmployeeTask, TaskEvent, TaskStatus
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -42,7 +38,6 @@ def read_tasks(
         )
     result = session.exec(statement).all()
     
-    print(result)
     tasks = [
         AvailableTaskPublic(
             id=row.id,
@@ -59,7 +54,6 @@ def read_tasks(
         )
         for row, department_name, department_id in result
     ]
-    print(tasks)
     # else:
     #     count_statement = (
     #         select(func.count())
@@ -88,11 +82,16 @@ def assign_task(
     return task_id
 
 @router.patch("/submit-task", response_model=TaskEventDomain)
-def submit_task(taskSerivce: TaskServiceDep, taskSubmitCommand: SubmitTaskCommand) -> Any:
+def submit_task(taskSerivce: TaskServiceDep, 
+                levelService: LevelsServiceDep,
+                taskSubmitCommand: SubmitTaskCommand) -> Any:
     """
     Submit task.
     """
     tasks = taskSerivce.handle_command(taskSubmitCommand)
+    print(tasks)
+    if type(tasks) is TaskCompletedEvent:
+        levelService.task_completed(tasks.task_id, tasks.assigned_to_id)
     return tasks
 
 @router.patch("/approve-task", response_model=TaskEventDomain)
@@ -134,10 +133,3 @@ def get_tasks_event(taskService: TaskServiceDep, id: UUID) -> Any:
     """
     events = taskService.get_aggregates(id)
     return events
-
-#         #TODO: Assign rewards, XP, Level-Up, etc.
-#         #function nextLevel(level) - BASED ON D&D
-#         #return 500 * (level ^ 2) - (500 * level)
-#         #local exponent = 1.5
-#         #local baseXP = 1000
-#         #return math.floor(baseXP * (level ^ exponent))

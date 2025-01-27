@@ -11,3 +11,11 @@ level_xp_requirements = {
     9: 16000,     # 7-9 months (28-36 months total)
     10: 20000     # 8-12 months (36-48 months total)
 }
+
+
+#         #TODO: Assign rewards, XP, Level-Up, etc.
+#         #function nextLevel(level) - BASED ON D&D
+#         #return 500 * (level ^ 2) - (500 * level)
+#         #local exponent = 1.5
+#         #local baseXP = 1000
+#         #return math.floor(baseXP * (level ^ exponent))

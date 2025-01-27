@@ -5,6 +5,8 @@ import { useState } from "react";
 import useAuth from "../../hooks/useAuth";
 import { useMutation } from "@tanstack/react-query"
 // import useCustomToast from "../../hooks/useCustomToast"
+import { useQueryClient } from "@tanstack/react-query"
+
 
 interface DropdownProps {
   taskList: AvailableTasksPublic | undefined
@@ -25,6 +27,7 @@ const groupTasksByDepartment = (
 };
 
 const Dropdown = ({ taskList }: DropdownProps) => {
+  const queryClient = useQueryClient()
   const { user: currentUser } = useAuth();
   const groupedTasks = taskList ? groupTasksByDepartment(taskList.data) : {};
   const [selectedTask, setSelectedTask] = useState<AvailableTaskPublic | null>(null);
@@ -36,6 +39,7 @@ const Dropdown = ({ taskList }: DropdownProps) => {
     },
       onSuccess: () => {
         console.log("Task assigned successfully");
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] })
         //showToast("Success", "Task assigned successfully", "success");
       },
       onError: (error: any) => {
@@ -50,6 +54,7 @@ const Dropdown = ({ taskList }: DropdownProps) => {
       await TasksService.submitTask(data),
       onSuccess: () => {
         console.log("Task completed successfully");
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] })
         //showToast("Success", "Task completed successfully", "success");
       },
       onError: (error: any) => {

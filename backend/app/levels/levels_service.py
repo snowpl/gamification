@@ -1,4 +1,25 @@
-# class LevelsService:
+from uuid import UUID
+from app.levels.levels_repository import LevelsRepository
+from app.levels.levels_requirements import level_xp_requirements
+
+class LevelsService:
+    def __init__(self, repository: LevelsRepository):
+        self.repository = repository
+
+    def task_completed(self, task_id: UUID, employee_id: UUID):
+        task = self.repository.get_task(task_id)
+        employee_level = self.repository.get_level(employee_id)
+        
+        #Grant XP to employee
+        employee_level.xp += int(task.person_xp * employee_level.xp_multiplier)
+        xp_missing = level_xp_requirements[employee_level.level+1] - employee_level.xp
+        
+        if xp_missing <= 0:
+            employee_level.level += 1
+            employee_level.xp = 0
+            #Check employee multiplier (if employee level is higher then company level)
+
+        self.repository.save(employee_level)
 #     def __init__(self, repository: TaskRepository):
 #         self.repository = repository
 

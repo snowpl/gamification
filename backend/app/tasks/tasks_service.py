@@ -1,120 +1,12 @@
 from datetime import datetime
-from enum import Enum
-from typing import Dict, List, Any, Optional
+from typing import List, Optional
 from uuid import UUID, uuid4
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from functools import singledispatch
-from fastapi import APIRouter
-from sqlalchemy.orm import Session
-from sqlalchemy import select, insert
 from typing import Optional, List
-from sqlmodel import func, select
+from app.tasks.task_repository import TaskRepository
 from app.models import EmployeeTask, TaskEvent, TaskStatus
-
-#region Domain Events
-@dataclass
-class TaskEventDomain:
-    aggregate_id: UUID
-    timestamp: datetime
-    version: int
-
-@dataclass
-class TaskAssignedEvent(TaskEventDomain):
-    assigned_to_id: UUID
-    task_id: UUID
-
-@dataclass
-class TaskCompletedEvent(TaskEventDomain):
-    assigned_to_id: UUID
-    task_id: UUID
-    approved_by_id: UUID
-
-@dataclass
-class TaskSubmittedEvent(TaskEventDomain):
-    pass
-
-@dataclass
-class TaskRejectedEvent(TaskEventDomain):
-    reason: str
-    approved_by_id: UUID
-
-@dataclass
-class TaskCancelledEvent(TaskEventDomain):
-    reason: str
-#endregion
-
-#region Commands
-@dataclass
-class Command:
-    aggregate_id: UUID
-
-@dataclass
-class AssignTaskCommand:
-    assigned_to_id: UUID
-    task_id: UUID
-    title: str
-    description: str
-    requires_approval: bool
-
-@dataclass
-class SubmitTaskCommand(Command):
-    pass
-
-@dataclass
-class ApproveTaskCommand(Command):
-    approved_by_id: UUID
-
-@dataclass
-class RejectTaskCommand(Command):
-    reason: str
-    approved_by_id: UUID
-
-@dataclass
-class CancelTaskCommand(Command):
-    reason: str
-#endregion
-
-# Domain Model
-@dataclass
-class EmployeeTaskDomain:
-    id: UUID
-    title: str
-    description: str
-    task_id: UUID
-    assigned_to_id: UUID
-    completed_at: datetime | None
-    created_at: datetime
-    reason: str
-    approved_by_id: UUID | None
-    submitted_at: datetime | None
-    version: int = 1
-    status: TaskStatus = TaskStatus.ASSIGNED
-    requires_approval: bool = False
-
-    @classmethod
-    def create(cls, command: AssignTaskCommand) -> tuple['EmployeeTaskDomain', TaskAssignedEvent]:
-        id = uuid4()
-        event = TaskAssignedEvent(
-            aggregate_id=id,
-            task_id = command.task_id,
-            assigned_to_id=command.assigned_to_id,
-            timestamp=datetime.now(),
-            version=1
-        )
-        task = cls(id=id, 
-                   task_id=command.task_id, 
-                   created_at=event.timestamp, 
-                   title=command.title, 
-                   description=command.description,
-                   assigned_to_id=command.assigned_to_id,
-                   completed_at=None,
-                   reason="",
-                   requires_approval=command.requires_approval,
-                   approved_by_id=None,
-                   submitted_at=None,
-                   status=TaskStatus.ASSIGNED
-        )
-        return task, event
+from app.tasks.task_models import ApproveTaskCommand, AssignTaskCommand, CancelTaskCommand, Command, EmployeeTaskDomain, RejectTaskCommand, SubmitTaskCommand, TaskAssignedEvent, TaskCancelledEvent, TaskCompletedEvent, TaskEventDomain, TaskRejectedEvent, TaskSubmittedEvent
 
 #region Event Handler
 
@@ -273,109 +165,6 @@ def _(command: CancelTaskCommand, task: EmployeeTask) -> TaskCancelledEvent:
     )
 #endregion
 
-#region Repository Interface
-@singledispatch
-def update_event_data(event, event_data):
-    raise ValueError(f"Unhandled event type: {type(event)}")
-
-@update_event_data.register
-def _(event: TaskAssignedEvent, event_data: dict):
-    event_data.update({
-        "assigned_to_id": event.assigned_to_id,
-        "task_id": event.task_id,
-        "event_type": "TaskAssignedEvent"
-    })
-
-# Handle specific event types for additional fields
-@update_event_data.register
-def _(event: TaskSubmittedEvent, event_data: dict):
-    event_data.update({
-        "event_type": "TaskSubmittedEvent"
-    })
-
-@update_event_data.register
-def _(event: TaskCompletedEvent, event_data: dict):
-    event_data.update({
-        "assigned_to_id": event.assigned_to_id,
-        "task_id": event.task_id,
-        "event_type": "TaskCompletedEvent",
-        "approved_by_id": event.approved_by_id
-    })
-
-@update_event_data.register
-def _(event: TaskCancelledEvent, event_data: dict):
-    event_data.update({
-        "reason": event.reason,
-        "event_type": "TaskCancelledEvent"
-    })
-
-@update_event_data.register
-def _(event: TaskRejectedEvent, event_data: dict):
-     event_data.update({
-        "reason": event.reason,
-        "event_type": "TaskRejectedEvent",
-        "approved_by_id": event.approved_by_id
-    })
-
-class TaskRepository:
-    def save(self, task: EmployeeTask) -> None:
-        raise NotImplementedError
-
-    def save_event(self, event: TaskEvent) -> None:
-        raise NotImplementedError
-
-    def get_by_id(self, task_id: UUID) -> Optional[EmployeeTask]:
-        raise NotImplementedError
-
-    def get_events(self, task_id: UUID) -> List[TaskEvent]:
-        raise NotImplementedError
-
-class PostgresTaskRepository(TaskRepository):
-    def __init__(self, db_session: Session):
-        self.db_session = db_session
-
-    def save(self, task: EmployeeTask) -> None:
-        existing_task = self.get_by_id(task.id)
-        if existing_task:
-            # Update the task
-            self.db_session.merge(task)
-        else:
-            # Add a new task
-            self.db_session.add(task)
-        self.db_session.commit()
-
-    def save_event(self, event: TaskEvent) -> None:
-        # Convert the event to a dict representation if needed
-        event_data = {
-            "aggregate_id": event.aggregate_id,
-            "timestamp": event.timestamp,
-            "version": event.version
-        }
-
-        # Call the handler
-        update_event_data(event, event_data)
-        self.db_session.execute(insert(TaskEvent).values(event_data))
-        self.db_session.commit()
-        
-    def get_by_id(self, id: UUID) -> Optional[EmployeeTask]:
-        query = select(EmployeeTask).where(EmployeeTask.id==id)
-        result = self.db_session.execute(query).scalar_one_or_none()
-        return result
-
-    def get_events(self, id: UUID) -> List[TaskEvent]:
-        query = select(TaskEvent).filter_by(aggregate_id=id).order_by(TaskEvent.timestamp)
-        result = self.db_session.execute(query).scalars().all()
-        return result
-    
-    def get_user_tasks(self, id: UUID) -> List[EmployeeTask]:
-        print('doing a query')
-        query = select(EmployeeTask).where(EmployeeTask.assigned_to_id==id)
-        result = self.db_session.execute(query).scalars().all()
-        print(result)
-        return result
-
-#endregion
-
 class TaskService:
     def __init__(self, repository: TaskRepository):
         self.repository = repository
@@ -413,4 +202,3 @@ class TaskService:
         self.repository.save(updated_task)
         self.repository.save_event(event)
         return event
-
