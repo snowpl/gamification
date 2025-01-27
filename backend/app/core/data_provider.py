@@ -2,7 +2,7 @@ import uuid
 from requests import Session
 from app import crud
 from app.models import AvailableTaskCreate, DepartmentCreate, EmployeeTask
-from app.api.users.skills_models import SkillCreate
+from app.api.users.skills_models import GlobalSkillCreate
 
 def create_sales_department(session:Session, company_id:uuid) -> EmployeeTask:
     sales_department = DepartmentCreate(
@@ -11,14 +11,14 @@ def create_sales_department(session:Session, company_id:uuid) -> EmployeeTask:
     )
     department = crud.create_department(session=session, department_in=sales_department)
 
-    content_skills = SkillCreate(
+    content_skills = GlobalSkillCreate(
         name="Sales Skill",
         department_id=department.id,
         xp=0,
         level=0,
         description="Everything related to sales skill #1"
     )
-    cs = crud.create_skill(session=session, skill_in=content_skills)
+    cs = crud.create_global_skill(session=session, skill_in=content_skills)
 
     task1 = AvailableTaskCreate(
         title="Research client needs",
@@ -43,77 +43,77 @@ def create_marketing_department(session: Session, company_id: uuid) -> EmployeeT
     )
     marketing_department = crud.create_department(session=session, department_in=marketing_department)
         
-    content_skills = SkillCreate(
+    content_skills = GlobalSkillCreate(
         name="Content Creation",
         department_id=marketing_department.id,
         xp=0,
         level=0,
         description="Everything related to content creation"
     )
-    cs = crud.create_skill(session=session, skill_in=content_skills)
+    cs = crud.create_global_skill(session=session, skill_in=content_skills)
 
-    research = SkillCreate(
+    research = GlobalSkillCreate(
         name="Research Creation",
         department_id=marketing_department.id,
         xp=0,
         level=0,
         description="Everything related to reaserch in marketing"
     )
-    rs = crud.create_skill(session=session, skill_in=research)
+    rs = crud.create_global_skill(session=session, skill_in=research)
 
-    campaigns = SkillCreate(
+    campaigns = GlobalSkillCreate(
         name="Campaigns",
         department_id=marketing_department.id,
         xp=0,
         level=0,
         description="Everything related to marketing campaigns"
     )
-    camcs = crud.create_skill(session=session, skill_in=campaigns)
+    camcs = crud.create_global_skill(session=session, skill_in=campaigns)
 
-    partner = SkillCreate(
+    partner = GlobalSkillCreate(
         name="Partnerships",
         department_id=marketing_department.id,
         xp=0,
         level=0,
         description="Everything related to partnerships"
     )
-    pars = crud.create_skill(session=session, skill_in=partner)
+    pars = crud.create_global_skill(session=session, skill_in=partner)
 
-    sm = SkillCreate(
+    sm = GlobalSkillCreate(
         name="Social Media",
         department_id=marketing_department.id,
         xp=0,
         level=0,
         description="Everything related to social media"
     )
-    sms = crud.create_skill(session=session, skill_in=sm)
+    sms = crud.create_global_skill(session=session, skill_in=sm)
     
-    website = SkillCreate(
+    website = GlobalSkillCreate(
         name="Website",
         department_id=marketing_department.id,
         xp=0,
         level=0,
         description="Everything related to website"
     )
-    ws = crud.create_skill(session=session, skill_in=website)
+    ws = crud.create_global_skill(session=session, skill_in=website)
 
-    analytics = SkillCreate(
+    analytics = GlobalSkillCreate(
         name="Analytics",
         department_id=marketing_department.id,
         xp=0,
         level=0,
         description="Everything related to analytics"
     )
-    anas = crud.create_skill(session=session, skill_in=analytics)
+    anas = crud.create_global_skill(session=session, skill_in=analytics)
 
-    accountbased = SkillCreate(
+    accountbased = GlobalSkillCreate(
         name="Account Based Marketing",
         department_id=marketing_department.id,
         xp=0,
         level=0,
         description="Everything related to account based marketing"
     )
-    accs = crud.create_skill(session=session, skill_in=accountbased)
+    accs = crud.create_global_skill(session=session, skill_in=accountbased)
 
     task1 = AvailableTaskCreate(
         title="Research client needs",

@@ -117,6 +117,13 @@ export type RejectTaskCommand = {
     approved_by_id: string;
 };
 
+export type SkillPublic = {
+    name: string;
+    xp?: number;
+    level?: number;
+    missing_xp?: number;
+};
+
 export type SubmitTaskCommand = {
     aggregate_id: string;
 };
@@ -174,7 +181,7 @@ export type UserRegister = {
 };
 
 export type UsersPublic = {
-    data: Array<UserPublic>;
+    data?: Array<UserPublic>;
     count: number;
 };
 
@@ -200,6 +207,18 @@ export type UserWithExperience = {
     current_xp: number;
     level: number;
     missing_xp: number;
+};
+
+export type UserWithSkills = {
+    email: string;
+    is_active?: boolean;
+    is_superuser?: boolean;
+    full_name?: (string | null);
+    id: string;
+    current_xp: number;
+    level: number;
+    missing_xp: number;
+    skills: Array<SkillPublic>;
 };
 
 export type ValidationError = {
@@ -352,6 +371,8 @@ export type UsersUpdatePasswordMeData = {
 };
 
 export type UsersUpdatePasswordMeResponse = (Message);
+
+export type UsersReadUserMe1Response = (UserWithSkills);
 
 export type UsersRegisterUserData = {
     requestBody: UserRegister;

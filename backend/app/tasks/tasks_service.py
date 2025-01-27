@@ -36,7 +36,7 @@ def _(event: TaskCompletedEvent, task: EmployeeTask | None) -> EmployeeTask:
         title=task.title,
         description=task.description,
         version=task.version,
-        task_id=task.task_id,
+        task_id=event.task_id,
         assigned_to_id=task.assigned_to_id,
         status=TaskStatus.COMPLETED,
         created_at=task.created_at,
@@ -200,5 +200,9 @@ class TaskService:
 
         # Save the updated task and the event to the repository
         self.repository.save(updated_task)
+        print('saved task:')
+        print(updated_task)
         self.repository.save_event(event)
+        print('saved event:')
+        print(event)
         return event

@@ -19,7 +19,7 @@ import {
   import Dropdown from "../../components/Tasks/Dropdown"
   import { PaginationFooter } from "../../components/Common/PaginationFooter.tsx"
   import useAuth from "../../hooks/useAuth"
-  import { FiCheck, FiCheckCircle, FiXCircle, FiSlash } from 'react-icons/fi';
+  // import { FiCheck, FiCheckCircle, FiXCircle, FiSlash } from 'react-icons/fi';
 
   const tasksSearchSchema = z.object({
     page: z.number().catch(1),
@@ -30,7 +30,7 @@ import {
     validateSearch: (search) => tasksSearchSchema.parse(search),
   })
   
-  const PER_PAGE = 8
+  const PER_PAGE = 50
   
   function getTasksQueryOptions({ page }: { page: number }) {
   const { user: currentUser } = useAuth()
@@ -84,7 +84,6 @@ import {
                 <Th>Description</Th>
                 <Th>Status</Th>
                 <Th>Requires Approval</Th>
-                <Th>Actions</Th>
               </Tr>
             </Thead>
             {isPending ? (
@@ -114,21 +113,6 @@ import {
                     </Td>
                     <Td isTruncated maxWidth="150px">
                       {task.requires_approval ? "Yes" : "No"}
-                    </Td>
-                    <Td>
-                      {(task.status === "Assigned") && (
-                        <span><FiCheck/>Submit Action</span>
-                      )}
-                      {(task.status === "Waiting Approval") && (
-                        <>
-                        <span><FiCheckCircle />Approve Action</span>
-                        <span><FiXCircle />Reject Action</span>
-                        </>
-                      )}
-                      {(task.status === "Completed") && (
-                        <span><FiSlash/>Cancel Action</span>
-                      )}
-                      {/* <ActionsMenu type={"Task"} value={task} /> */}
                     </Td>
                   </Tr>
                 ))}

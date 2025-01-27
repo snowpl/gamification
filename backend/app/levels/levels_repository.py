@@ -4,8 +4,8 @@ from typing import List, Optional
 from uuid import UUID
 from requests import Session
 from sqlalchemy import select, insert
-from app.models import AvailableTask, EmployeeLevel, Skill
-from app.api.users.skills_models import SkillCreate
+from app.models import AvailableTask, EmployeeLevel, EmployeeSkill, GlobalSkill
+from app.api.users.skills_models import EmployeeSkillCreate, GlobalSkillCreate
 
 # #region Repository Interface
 # @singledispatch
@@ -30,13 +30,13 @@ class LevelsRepository:
     def get_level(self, employee_id: UUID) -> EmployeeLevel:
         raise NotImplementedError
     
-    def get_skill(self, skill_id: UUID) -> Skill:
+    def get_global_skill(self, skill_id: UUID) -> GlobalSkill:
         raise NotImplementedError
     
-    def get_employee_skill(self, skill_id: UUID, employee_id: UUID) -> Optional[Skill]:
+    def get_employee_skill(self, skill_id: UUID, employee_id: UUID) -> Optional[EmployeeSkill]:
         raise NotImplementedError
 
-    def create_skill(self, skill_in: SkillCreate) -> Skill:
+    def create_employee_skill(self, skill_in: EmployeeSkillCreate) -> EmployeeSkill:
         raise NotImplementedError
     
     # def get_by_id(self, task_id: UUID) -> Optional[EmployeeTask]:
@@ -70,18 +70,18 @@ class PostgresLevelsRepository(LevelsRepository):
         result = self.db_session.execute(query).scalars().one()
         return result
     
-    def get_skill(self, skill_id: UUID) -> Skill:
-        query = select(Skill).where(Skill.id==skill_id)
+    def get_global_skill(self, skill_id: UUID) -> GlobalSkill:
+        query = select(GlobalSkill).where(GlobalSkill.id==skill_id)
         result = self.db_session.execute(query).scalars().one()
         return result
 
-    def get_employee_skill(self, skill_id: UUID, user_id: UUID) -> Optional[Skill]:
-        query = select(Skill).where((Skill.id==skill_id) & (Skill.user_id == user_id))
+    def get_employee_skill(self, skill_id: UUID, user_id: UUID) -> Optional[EmployeeSkill]:
+        query = select(EmployeeSkill).where((EmployeeSkill.id == skill_id) & (EmployeeSkill.user_id == user_id))
         result = self.db_session.execute(query).scalars().one_or_none()
         return result
     
-    def create_skill(self, skill_in: SkillCreate) -> Skill:
-        db_skill = Skill.model_validate(skill_in)
+    def create_employee_skill(self, skill_in: EmployeeSkillCreate) -> EmployeeSkill:
+        db_skill = EmployeeSkill.model_validate(skill_in)
         self.db_session.add(db_skill)
         self.db_session.commit()
         return db_skill

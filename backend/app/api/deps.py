@@ -19,7 +19,7 @@ from sqlmodel import Session
 from app.core import security
 from app.core.config import settings
 from app.core.db import engine
-from app.models import EmployeeLevel, Skill, TokenPayload, User
+from app.models import EmployeeLevel, GlobalSkill, EmployeeSkill, TokenPayload, User
 from app.levels.levels_requirements import level_xp_requirements, skill_xp_requirements
 
 reusable_oauth2 = OAuth2PasswordBearer(
@@ -131,12 +131,13 @@ def get_current_user_with_skills_and_experience(session: SessionDep, token: Toke
                 User, 
                 EmployeeLevel.level.label("level"), 
                 EmployeeLevel.xp.label("xp"),
-                Skill.name.label("skill_name"),
-                Skill.level.label("skill_level"),
-                Skill.xp.label("skill_xp"),
+                GlobalSkill.name.label("skill_name"),
+                EmployeeSkill.level.label("skill_level"),
+                EmployeeSkill.xp.label("skill_xp"),
             )
         .join(EmployeeLevel, User.id == EmployeeLevel.employee_id)
-        .join(Skill, User.id == Skill.user_id)
+        .join(EmployeeSkill, User.id == EmployeeSkill.user_id, isouter=True)
+        .join(GlobalSkill, User.id == EmployeeSkill.skill_id, isouter=True)
         .filter(User.id == token_data.sub)
     )
 
@@ -156,22 +157,16 @@ def get_current_user_with_skills_and_experience(session: SessionDep, token: Toke
         is_superuser=results[0].User.is_superuser,
         full_name=results[0].User.full_name,
     )
-    print(user_data)
     for row in results:
-
-        print('assigning first skill')
-        skill_missing_xp = skill_xp_requirements[row.skill_level+1] - row.skill_xp
-        print(skill_missing_xp)
-        print(row.skill_name)
-        print(row.skill_xp)
-        print(row.skill_level)
-        user_data.skills.append(SkillPublic(
-            name = row.skill_name,
-            xp = row.skill_xp,
-            level = row.skill_level,
-            missing_xp = skill_missing_xp
-            ))
-        print('skill asigned')
+        if row.skill_name:
+            skill_missing_xp = skill_xp_requirements[row.skill_level+1] - row.skill_xp
+            
+            user_data.skills.append(SkillPublic(
+                name = row.skill_name,
+                xp = row.skill_xp,
+                level = row.skill_level,
+                missing_xp = skill_missing_xp
+                ))
 
     return user_data
 

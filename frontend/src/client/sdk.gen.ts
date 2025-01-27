@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { CompaniesReadCompanyResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, TasksReadTasksData, TasksReadTasksResponse, TasksAssignTaskData, TasksAssignTaskResponse, TasksSubmitTaskData, TasksSubmitTaskResponse, TasksApproveTaskData, TasksApproveTaskResponse, TasksRejectTaskData, TasksRejectTaskResponse, TasksCancelTaskData, TasksCancelTaskResponse, TasksGetEmployeeTasksData, TasksGetEmployeeTasksResponse, TasksGetTasksEventData, TasksGetTasksEventResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { CompaniesReadCompanyResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, TasksReadTasksData, TasksReadTasksResponse, TasksAssignTaskData, TasksAssignTaskResponse, TasksSubmitTaskData, TasksSubmitTaskResponse, TasksApproveTaskData, TasksApproveTaskResponse, TasksRejectTaskData, TasksRejectTaskResponse, TasksCancelTaskData, TasksCancelTaskResponse, TasksGetEmployeeTasksData, TasksGetEmployeeTasksResponse, TasksGetTasksEventData, TasksGetTasksEventResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersReadUserMe1Response, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class CompaniesService {
     /**
@@ -531,6 +531,19 @@ export class UsersService {
             errors: {
                 422: 'Validation Error'
             }
+        });
+    }
+    
+    /**
+     * Read User Me
+     * Get current user with skills.
+     * @returns UserWithSkills Successful Response
+     * @throws ApiError
+     */
+    public static readUserMe1(): CancelablePromise<UsersReadUserMe1Response> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/users/me-with-skills'
         });
     }
     

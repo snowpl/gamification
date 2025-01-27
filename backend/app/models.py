@@ -30,7 +30,7 @@ class User(UserBase, table=True):
             back_populates="approved_by",
             foreign_keys='[EmployeeTask.approved_by_id]')
     )
-    user_skills: list["Skill"] = Relationship(back_populates="user")
+    user_skills: list["EmployeeSkill"] = Relationship(back_populates="user")
     employee_level_id: Optional[UUID] = Field(
         foreign_key="employee_levels.id", nullable=True, ondelete="CASCADE"
     )
@@ -119,16 +119,34 @@ class CompanyCreate(CompanyBase):
     pass
 
 #Database model
-class Skill(SkillBase, table=True):
-    user_id: Optional[UUID] = Field(
-        foreign_key="user.id", nullable=True, ondelete="CASCADE"
-    )
-    user: Optional["User"] = Relationship(back_populates="user_skills")
+class GlobalSkill(SkillBase, table=True):
+    # user_id: Optional[UUID] = Field(
+    #     foreign_key="user.id", nullable=True, ondelete="CASCADE"
+    # )
     department_id: UUID = Field(
         foreign_key="department.id", nullable=False, ondelete="CASCADE"
     )
     department: "Department" = Relationship(back_populates="department_skills")
-    employee_tasks: list["AvailableTask"] = Relationship(back_populates="skill", cascade_delete=True)
+    available_tasks: list["AvailableTask"] = Relationship(back_populates="skill", cascade_delete=True)
+    users: list["EmployeeSkill"] = Relationship(back_populates="skills")
+
+#Database model
+class EmployeeSkill(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    xp: int = 0
+    level: int = 0
+    user_id: UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    skill_id: UUID = Field(foreign_key="globalskill.id", nullable=False, ondelete="CASCADE")
+    
+    skill: "GlobalSkill" = Relationship(back_populates="users")
+    user: "User" = Relationship(back_populates="user_skills")
+
+    # department_id: UUID = Field(
+    #     foreign_key="department.id", nullable=False, ondelete="CASCADE"
+    # )
+    # department: "Department" = Relationship(back_populates="department_skills")
+    #employee_tasks: list["EmployeeTask"] = Relationship(back_populates="skill", cascade_delete=True)
+    #user: Optional["User"] = Relationship(back_populates="user_skills")
 
 # #Shared properties
 # class LevelBase(SQLModel):
@@ -155,7 +173,7 @@ class Department(DepartmentBase, table=True):
     company: "Company" = Relationship(back_populates="departments")
     employees: list["User"] = Relationship(back_populates="department", cascade_delete=True)
     tasks: list["AvailableTask"] = Relationship(back_populates="department", cascade_delete=True)
-    department_skills: list["Skill"] = Relationship(back_populates="department", cascade_delete=True)
+    department_skills: list["GlobalSkill"] = Relationship(back_populates="department", cascade_delete=True)
 
 #Properties to receive on department creation
 class DepartmentCreate(DepartmentBase):
@@ -180,9 +198,9 @@ class AvailableTask(AvailableTaskBase, table=True):
     )
     department: "Department" = Relationship(back_populates="tasks")
     skill_id: UUID = Field(
-        foreign_key="skill.id", nullable=False, ondelete="CASCADE"
+        foreign_key="globalskill.id", nullable=False, ondelete="CASCADE"
     )
-    skill: "Skill" = Relationship(back_populates="employee_tasks")
+    skill: "GlobalSkill" = Relationship(back_populates="available_tasks")
     company_id: UUID = Field(
         foreign_key="company.id", nullable=False, ondelete="CASCADE"
     )
@@ -192,7 +210,7 @@ class AvailableTaskPublic(AvailableTaskBase):
     id: UUID
     department_id: UUID
     department_name: str
-    #skill_id: UUID
+    skill_id: UUID
     #company_id: UUID
 
 class AvailableTasksPublic(SQLModel):

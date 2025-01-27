@@ -60,7 +60,7 @@ function UsersTable() {
     placeholderData: (prevData) => prevData,
   })
 
-  const hasNextPage = !isPlaceholderData && users?.data.length === PER_PAGE
+  const hasNextPage = !isPlaceholderData && users?.data!.length === PER_PAGE
   const hasPreviousPage = page > 1
 
   useEffect(() => {
@@ -94,7 +94,7 @@ function UsersTable() {
             </Tbody>
           ) : (
             <Tbody>
-              {users?.data.map((user) => (
+              {users?.data!.map((user) => (
                 <Tr key={user.id}>
                   <Td
                     color={!user.full_name ? "ui.dim" : "inherit"}

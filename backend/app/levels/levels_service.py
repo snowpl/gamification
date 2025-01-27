@@ -1,7 +1,7 @@
 from uuid import UUID
 from app.levels.levels_repository import LevelsRepository
 from app.levels.levels_requirements import level_xp_requirements, skill_xp_requirements
-from app.api.users.skills_models import SkillCreate
+from app.api.users.skills_models import EmployeeSkillCreate, GlobalSkillCreate
 
 class LevelsService:
     def __init__(self, repository: LevelsRepository):
@@ -10,8 +10,10 @@ class LevelsService:
     def task_completed(self, task_id: UUID, employee_id: UUID):
         task = self.repository.get_task(task_id)
         employee_level = self.repository.get_level(employee_id)
+        print(task.skill_id)
+        print(employee_id)
         employee_skill = self.repository.get_employee_skill(task.skill_id, employee_id)
-
+        print(employee_skill)
         #Grant XP to employee
         employee_level.xp += int(task.person_xp * employee_level.xp_multiplier)
         xp_missing = level_xp_requirements[employee_level.level+1] - employee_level.xp
@@ -22,16 +24,15 @@ class LevelsService:
             #Check employee multiplier (if employee level is higher then company level)
 
         if not employee_skill:
-            skill = self.repository.get_skill(task.skill_id)
+            skill = self.repository.get_global_skill(task.skill_id)
             # Create the skill for the user first time completing task in a domain
-            skill_create = SkillCreate(
+            skill_create = EmployeeSkillCreate(
+                skill_id = skill.skill_id,
                 user_id=employee_id,
-                name=skill.name,  
                 xp=0,
-                level=0,
-                department_id=task.department_id
+                level=0
             )
-            employee_skill = self.repository.create_skill(skill_create)
+            employee_skill = self.repository.create_employee_skill(skill_create)
 
         # Grant XP to the skill
         employee_skill.xp += task.skill_xp
@@ -45,6 +46,7 @@ class LevelsService:
         # Save changes to the database
         self.repository.save(employee_level)
         self.repository.save(employee_skill)
+        print('level service finished')
 #     def __init__(self, repository: TaskRepository):
 #         self.repository = repository
 

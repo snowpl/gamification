@@ -1,12 +1,12 @@
 from uuid import UUID
 from typing import Any
 
-from app.api.users.skills_models import SkillCreate
+from app.api.users.skills_models import GlobalSkillCreate
 from app.api.users.users_models import UserCreate, UserUpdate
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import AvailableTask, AvailableTaskCreate, Company, CompanyCreate, Department, DepartmentCreate, EmployeeLevel, EmployeeTask, Item, ItemCreate, Skill, User
+from app.models import AvailableTask, AvailableTaskCreate, Company, CompanyCreate, Department, DepartmentCreate, EmployeeLevel, GlobalSkill, Item, ItemCreate, User
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -90,8 +90,8 @@ def create_department(*, session: Session, department_in: DepartmentCreate) -> D
     session.refresh(db_department)
     return db_department
 
-def create_skill(*, session: Session, skill_in: SkillCreate) -> Skill:
-    db_skill = Skill.model_validate(skill_in)
+def create_global_skill(*, session: Session, skill_in: GlobalSkillCreate) -> GlobalSkill:
+    db_skill = GlobalSkill.model_validate(skill_in)
     session.add(db_skill)
     session.commit()
     session.refresh(db_skill)
